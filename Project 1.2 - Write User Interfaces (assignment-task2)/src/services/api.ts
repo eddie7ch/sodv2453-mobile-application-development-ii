@@ -17,3 +17,15 @@ const api = axios.create({
 export const authenticateUser = (email: string, password: string): Promise<AxiosResponse> => {
     return api.post(`/login`, { email, password });
 };
+
+export const getEvents = (accessToken: string): Promise<AxiosResponse> => {
+    return api.get(`/events`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+};
+
+export const getEventDetails = (eventId: string, accessToken: string): Promise<AxiosResponse> => {
+    return api.get(`/events/${eventId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+};

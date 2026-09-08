@@ -9,6 +9,27 @@
 - Point totals per Dropbox listing (2026-09-07): Project 1.1 = /9, Project 1.2 = /15, Project 1.3 = /6, Project 2 = /9, Project 3 = /6, Project 4 = /6
 - **Only Project 1.1 has a due date published so far** (Sep 17, 2026, 11:59 PM) — confirmed via both the Dropbox page and Content > Course Schedule > Full Schedule (which lists every dated item across the whole course; as of 2026-09-07 it shows exactly one entry, Sep 17). Projects 1.2 onward have no due date yet — check back as the term progresses.
 
+## Overall implementation status (2026-09-08)
+
+Done autonomously while Eddie was away — see each project's own
+`PROGRESS.md` for full detail. **None of this has been reviewed by Eddie
+or actually run on a device yet — treat all of it as a draft to check,
+not a final submission.**
+
+| Project | Status | Notes |
+|---|---|---|
+| 1.1 | **Blocked** — not started | Assessment repo (`dimarachi/MobileAppDevelopmentAssessments`) still only has `main`; the required `login-screen-initial`/`login-screen-update` branches the D2L post and Teams announcement both claim exist are not actually there (re-verified repeatedly via `git ls-remote`). Nothing to build until the instructor actually pushes them. |
+| 1.2 | Implemented | Event Details screen, real event fetching, state-colored map markers. |
+| 1.3 | Implemented | Create Event form + GPS location + optional photo upload; event fetching switched to network-first caching. |
+| 2 | Implemented | Found and fixed the seeded "invalid email" bug (2-letter TLDs rejected) with a failing-test-first workflow; opened as a real PR — [PR #1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/1), still open for review. |
+| 3 | Implemented | JSDoc across utils/services/components, per-screen responsibility docs, full project README rewrite. |
+| 4 | Implemented & verified | Release-triggered GitHub Actions workflow; actually published two releases to trigger it for real — [v1.0.0](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.0.0) failed on a permissions issue (found and fixed), [v1.0.1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.0.1) fully green with the build zip attached. |
+
+Common caveat across 1.2-1.4: none of this was run in Expo Go or an
+emulator (none available in this environment) — `npx tsc --noEmit` and
+`yarn test` both pass throughout, but an actual on-device walkthrough is
+still worth doing before submitting anything.
+
 ## Repo structure (monorepo)
 
 This repo (`eddie7ch/sodv2453-mobile-application-development-ii`) holds all 6

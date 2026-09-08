@@ -9,6 +9,64 @@
 - Point totals per Dropbox listing (2026-09-07): Project 1.1 = /9, Project 1.2 = /15, Project 1.3 = /6, Project 2 = /9, Project 3 = /6, Project 4 = /6
 - **Only Project 1.1 has a due date published so far** (Sep 17, 2026, 11:59 PM) — confirmed via both the Dropbox page and Content > Course Schedule > Full Schedule (which lists every dated item across the whole course; as of 2026-09-07 it shows exactly one entry, Sep 17). Projects 1.2 onward have no due date yet — check back as the term progresses.
 
+## Repo structure (monorepo)
+
+This repo (`eddie7ch/sodv2453-mobile-application-development-ii`) holds all 6
+projects as plain folders — each one started as a separate fork (see table
+below for the original repo each came from), with the per-project `.git`
+history stripped out so everything lives under one tree with one commit
+history going forward:
+
+```
+SODV2453 Mobile Application Development II/
+├── course-info.md                                          (this file)
+├── resources/                                               Project 1.1 diagram + video transcripts
+├── MobileAppDevelopmentAssessments/                          Project 1.1 — Manage Code Changes Using Version Control
+├── Project 1.2 - Write User Interfaces (assignment-task2)/   Project 1.2 — Write User Interfaces
+├── Project 1.3 - Manage Data Flows (assignment-task3)/       Project 1.3 — Manage Data Flows
+├── Project 2 - Test Application (assignment-task4)/          Project 2  — Test Application
+├── Project 3 - Write Documentation (assignment-task5)/       Project 3  — Write Application Documentation
+└── Project 4 - Deploy Application (assignment-task6)/        Project 4  — Deploy Application
+```
+
+## How to work on any of the 6 projects
+
+All 6 project folders are the **same scaffold** — a React Native (Expo)
+app called "Volunteam" (a volunteer-event-finder app). Confirmed identical
+`package.json` across all 6 (only Project 1.1's `README.md` differs by a
+stray double-space). Each project folder builds on this scaffold to
+implement its own piece (login/version-control merge, UI screens, data
+flows, tests, docs, deployment).
+
+**Install & run** (from inside any project's folder):
+```bash
+yarn install          # or: npm install — yarn.lock is present, so prefer yarn
+npx expo start         # or: yarn start / yarn android / yarn ios / yarn web
+```
+Needs the Expo Go app (or an emulator/simulator) to actually view the app.
+
+**Fake backend API** (per each folder's own `README.md`):
+1. Edit `src/services/api.ts` and set `baseURL` to your computer's local IP
+   (not localhost — the Expo Go app on a phone/emulator needs a reachable IP)
+2. Run: `npx json-server --watch db.json --port 3333 --host <your-ip> -m ./node_modules/json-server-auth`
+   (`json-server-auth` middleware means the API has real auth endpoints,
+   not just plain CRUD)
+3. Alternative for a hosted fake API with no local server: point `baseURL`
+   at `https://my-json-server.typicode.com/<your-github-username>/<repo>`
+   (requires `db.json` to sit at the repo root, which it already does)
+
+**Image upload API:** edit `src/services/imageApi.ts`, sign up free at
+https://imgbb.com/signup for an API key, put it in a `.env` file as
+`IMGBB_API_KEY`, and start the app with:
+```bash
+IMGBB_API_KEY="your_key_here" npx expo start
+```
+For an actual build/publish (EAS), push the secret instead: `eas secret:push`.
+
+`node_modules/`, `.expo/`, `.env`, and log files are gitignored at the repo
+root (`**/node_modules/` etc.) so they won't get committed once dependencies
+are installed for real work.
+
 ## 15-week course schedule (from Course Outline PDF, page 3, "Course Modules and Schedule")
 
 | Week | Topic |

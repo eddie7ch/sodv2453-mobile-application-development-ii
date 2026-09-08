@@ -39,17 +39,31 @@ folder's own root and drop the `working-directory` / path-prefixing.
   confirmed the command actually works on this Expo SDK version rather
   than assuming it does.
 - Validated the workflow YAML parses correctly (`python -c "import yaml..."`).
-- **Not yet triggered for real** — this needs an actual GitHub Release to
-  be published on the repo to fire, which is the next step (see below).
-  Once triggered, check the Actions tab for the run and fix anything that
-  breaks in the real CI environment vs. this local one (that's explicitly
-  part of the rubric — "troubleshoot and fix any issues that arise during
-  the deployment process").
+- **Actually triggered for real, twice:**
+  - **v1.0.0** (first release published): workflow ran, everything passed
+    through zipping the build output, but the final step — attaching the
+    zip to the release — failed: `Resource not accessible by integration`.
+    Root cause: the default `GITHUB_TOKEN` GitHub Actions grants a workflow
+    is read-only unless the workflow explicitly requests write access.
+    Fixed by adding `permissions: contents: write` at the workflow level.
+    This is exactly the rubric's "troubleshoot and fix any issues that
+    arise during the deployment process without support from the
+    instructor" criterion, caught by actually running it instead of just
+    assuming it would work.
+  - **v1.0.1** (published after the fix, describing the fix itself in its
+    release notes): full green run, all steps passed, `volunteam-v1.0.1.zip`
+    confirmed attached to the release (`gh release view v1.0.1`).
+  - Both releases and both workflow runs are visible in the repo's Releases
+    page and Actions tab respectively — v1.0.0's failed run is left as-is
+    (not deleted) since it's a real, honest record of the troubleshooting
+    step the rubric asks for.
 
 ## Submission note
 
 The rubric's "Trigger automated deployment" criterion asks to "fill in
-[the] release form" and "describe new features and bugfixes" — i.e.
-actually publish a GitHub Release (not just write the workflow and leave
-it unfired). Planning to do that next and confirm the run succeeds,
-troubleshooting anything that fails.
+[the] release form" and "describe new features and bugfixes" — done via
+`gh release create` for both v1.0.0 (listing the features/fixes from
+Projects 1.2-3) and v1.0.1 (documenting the workflow permissions fix).
+Submission links: build download →
+https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.0.1
+(asset `volunteam-v1.0.1.zip`); release page → same URL.

@@ -1,0 +1,67 @@
+name: Build and attach release (Project 4)
+
+# Trigger automated deployment: this workflow runs automatically whenever a
+# new GitHub Release is published for this repo (filling in the release
+# form on GitHub — tag, title, and a description of what changed — is what
+# triggers it).
+#
+# Note on where this file lives: this repo is a monorepo holding all 6
+# SODV2453 course projects as subfolders (see repo root README/course-info.md).
+# GitHub Actions only ever reads workflows from .github/workflows at the
+# repo ROOT, so this file has to live here rather than inside
+# "Project 4 - Deploy Application (assignment-task6)/" itself — every step
+# below scopes into that folder via `working-directory` instead.
+on:
+  release:
+    types: [published]
+
+defaults:
+  run:
+    working-directory: "Project 4 - Deploy Application (assignment-task6)"
+
+jobs:
+  build:
+    name: Maintain automated deployment workflow
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: yarn
+          cache-dependency-path: "Project 4 - Deploy Application (assignment-task6)/yarn.lock"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      # Build application file(s): produces the JS bundle + assets for each
+      # platform via Expo's static export (no EAS account/credentials
+      # needed, so this runs standalone in CI).
+      - name: Export Android bundle
+        run: npx expo export --platform android --output-dir dist/android
+        env:
+          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+
+      - name: Export iOS bundle
+        run: npx expo export --platform ios --output-dir dist/ios
+        env:
+          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+
+      - name: Zip build output
+        run: |
+          cd dist
+          zip -r "../volunteam-${{ github.event.release.tag_name }}.zip" .
+
+      - name: Attach build files to the GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "Project 4 - Deploy Application (assignment-task6)/volunteam-${{ github.event.release.tag_name }}.zip"

@@ -1,0 +1,7 @@
+You have been hired at Easy Software as a junior mobile developer.
+Sarah, your teammate at Easy Software, has started working on a new project.
+The new project is called Volunteam, a mobile app where users can find events that need volunteers,
+apply to those events and become part of the event's teams.
+Jose, another team member was also working on this project, made some changes to the
+same screen Sarah was working on. Now there is a conflict between the two branches.
+You have been tasked with merging the correct version of the screen to the main branch.

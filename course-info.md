@@ -67,6 +67,65 @@ For an actual build/publish (EAS), push the secret instead: `eas secret:push`.
 root (`**/node_modules/` etc.) so they won't get committed once dependencies
 are installed for real work.
 
+## Rubrics for all 6 projects (fetched 2026-09-08 — all stored so nobody has to ask again)
+
+Every rubric below is 3 points per criterion (Mastery=3, Competent=2,
+Developing=1, Incomplete=0); "Competent" is the level actually being graded
+against day-to-day (Mastery just adds a "document your lessons learned"
+requirement on top). Points match the Dropbox folder totals exactly.
+
+**Project 1.1 — /9** (3 criteria): Setup repositories (clone from GitHub,
+create repos for new projects) · Commit changes as they are written (verify
+commits/pushes, write descriptive commit messages) · Submit changes for peer
+review (create PR, act on reviewer feedback, merge PR into codebase).
+
+**Project 1.2 — /15** (5 criteria): Layout components (use Presentational
+Components, style components, compose screens from different components) ·
+Style Components (keep clean/logical file structure, manage dependencies,
+use clear names/code structure) · Compose screens from different components
+(extract reusable structures, add properties, add states if applicable) ·
+Manage State (set initial component state, alter state as needed, set
+context e.g. API, consume context state) · Implement interactivities
+(create the event handler, pass it to the appropriate components, create
+navigation flow).
+
+**Project 1.3 — /6** (2 criteria): Consume data (fetch data from internet,
+save in cache, consume from cache) · Collect data (acquire data from users
+via forms, read the sensor e.g. GPS/camera/accelerometer, send data to
+internet).
+
+**Project 2 — /9** (3 criteria): Create unit tests (identify what to test,
+identify expected outcome, setup test objects/mocks, run tests, analyze
+results to fix code) · Execute end-to-end testing (write test script from
+business requirements, run app in testing environment, run test script,
+report findings/potential problems) · Debug any errors in applications
+(reproduce bug, identify cause, change code to fix issue, open a PR with
+the fix documenting the issue).
+
+**Project 3 — /6** (2 criteria): Document code (document function
+inputs/outputs, component properties/capabilities, class responsibilities —
+clear and accurate for both technical and non-technical readers) · Document
+project repository (write project scope/goal, maintain dev-environment
+setup instructions, maintain run instructions).
+
+**Project 4 — /6** (2 criteria): Maintain automated deployment workflow
+(build application file, run other commands, troubleshoot/fix deployment
+issues without instructor support) · Trigger automated deployment (fill in
+release form, describe new features and bugfixes).
+
+Overall score bands (same pattern each project, scaled to that project's
+total): Mastery = full points minimum, Competent = ~67% minimum, Developing
+= ~33% minimum, Incomplete = 0.
+
+**How I got these:** Projects 1.1-1.3's rubrics load fine via the "rubric"
+link on their own Content page. Project 2's equivalent link is broken (404
+once, froze the browser tab renderer on retry) — for Project 2, 3, and 4,
+the reliable path was the **Dropbox/Assignment submission page**
+(`Assessments > Dropbox/Assignment`, click into each project), which renders
+the full rubric table inline under "Rubric Name:" without needing that
+broken link at all. Use the Dropbox page first for any project going
+forward.
+
 ## 15-week course schedule (from Course Outline PDF, page 3, "Course Modules and Schedule")
 
 | Week | Topic |

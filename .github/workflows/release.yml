@@ -15,6 +15,12 @@ on:
   release:
     types: [published]
 
+# Needed to upload the build zip as a release asset — without this, the
+# default GITHUB_TOKEN is read-only and the last step fails with
+# "Resource not accessible by integration".
+permissions:
+  contents: write
+
 defaults:
   run:
     working-directory: "Project 4 - Deploy Application (assignment-task6)"

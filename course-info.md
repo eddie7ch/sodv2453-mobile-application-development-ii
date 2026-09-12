@@ -253,13 +253,24 @@ link pasted as a comment in that project's own D2L Dropbox folder.
 | 3 | Pull request link, specifically covering both the code comments and the README updates (Project 3 Submissions Dropbox) |
 | 4 | Build-files download link + GitHub release page link (Project 4 Submissions Dropbox) — no PR mentioned for this one |
 
-**Gap found 2026-09-12: Projects 1.2, 1.3, and 3 were implemented as plain
-commits directly to `master`, not as their own feature branch + PR.**
-Project 1.1 and 2 both went through a real branch + PR (required by their
-own instructions and already done); 1.2/1.3/3 need the same treatment
-retroactively — branch off the commit where each was implemented, open a
-PR into master, before they can actually be submitted. Not yet done as of
-this note.
+**Gap found 2026-09-12, fixed same day:** Projects 1.2, 1.3, and 3 were
+implemented as plain commits directly to `master`, not as their own
+feature branch + PR. Since `master` already had the content, a normal
+feature-branch PR would show an empty diff, so each one got its own
+throwaway `base/project-X` (the commit right before that project landed)
+and `pr/project-X` (the commit right after) branch pair, pushed to GitHub,
+with the PR opened between them — a real, reviewable, mergeable diff
+scoped to just that project, without touching `master` itself.
+
+- Project 1.2: https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/2
+- Project 1.3: https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/3
+- Project 3: https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/4
+
+All three confirmed mergeable with real diffs (270/543/2870 additions
+respectively). Merging these is a formality (the content's already on
+`master`) — the main thing still needed is Eddie's own read-through and,
+where the project calls for it, his own description in the PR body before
+submitting the link to D2L.
 
 ## Due dates (added to Google Calendar eddie7ch@gmail.com)
 

@@ -18,10 +18,10 @@ not a final submission.**
 
 | Project | Status | Notes |
 |---|---|---|
-| 1.1 | **Blocked** — not started | Assessment repo (`dimarachi/MobileAppDevelopmentAssessments`) still only has `main`; the required `login-screen-initial`/`login-screen-update` branches the D2L post and Teams announcement both claim exist are not actually there (re-verified repeatedly via `git ls-remote`). Nothing to build until the instructor actually pushes them. |
+| 1.1 | Merged, needs Eddie's own writeup | Branches now exist on the assessment repo (confirmed 2026-09-12). Fetched, merged `login-screen-update` into `login-screen-initial` (clean, no conflicts), pushed, opened [eddie7ch/MobileAppDevelopmentAssessments#1](https://github.com/eddie7ch/MobileAppDevelopmentAssessments/pull/1). PR body has a placeholder checklist for Eddie's own description of the branch differences and what he learned, since that part is graded on his own process and he asked to write it himself. |
 | 1.2 | Implemented | Event Details screen, real event fetching, state-colored map markers. |
 | 1.3 | Implemented | Create Event form + GPS location + optional photo upload; event fetching switched to network-first caching. |
-| 2 | Implemented | Found and fixed the seeded "invalid email" bug (2-letter TLDs rejected) with a failing-test-first workflow; opened as a real PR — [PR #1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/1), still open for review. |
+| 2 | Implemented, PR merged | Found and fixed the seeded "invalid email" bug (2-letter TLDs rejected) with a failing-test-first workflow. [PR #1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/1) merged into master 2026-09-12. |
 | 3 | Implemented | JSDoc across utils/services/components, per-screen responsibility docs, full project README rewrite. |
 | 4 | Implemented & verified | Release-triggered GitHub Actions workflow; actually published two releases to trigger it for real — [v1.0.0](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.0.0) failed on a permissions issue (found and fixed), [v1.0.1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.0.1) fully green with the build zip attached. |
 

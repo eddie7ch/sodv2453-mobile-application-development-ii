@@ -238,6 +238,29 @@ working on. Now there is a conflict between the two branches. You have
 been tasked with merging the correct version of the screen to the main
 branch."
 
+## Submission guidelines per project (confirmed 2026-09-12)
+
+No project in this course asks for a video, screenshot, or diagram/chart as
+a submission deliverable. Every one of them is submitted the same way: a
+link pasted as a comment in that project's own D2L Dropbox folder.
+
+| Project | Exact submission requirement |
+|---|---|
+| 1.1 | Pull request link (Project 1- part 1 Submissions Dropbox) |
+| 1.2 | Pull request link (Project 1 Part 2 Submissions Dropbox) |
+| 1.3 | Pull request link (Project 1- Part 3 Submissions Dropbox) |
+| 2 | A link (Project 2 Submissions Dropbox) — task instructions say "open a PR with your fix, documenting the issue," so a PR link is the natural fit here too |
+| 3 | Pull request link, specifically covering both the code comments and the README updates (Project 3 Submissions Dropbox) |
+| 4 | Build-files download link + GitHub release page link (Project 4 Submissions Dropbox) — no PR mentioned for this one |
+
+**Gap found 2026-09-12: Projects 1.2, 1.3, and 3 were implemented as plain
+commits directly to `master`, not as their own feature branch + PR.**
+Project 1.1 and 2 both went through a real branch + PR (required by their
+own instructions and already done); 1.2/1.3/3 need the same treatment
+retroactively — branch off the commit where each was implemented, open a
+PR into master, before they can actually be submitted. Not yet done as of
+this note.
+
 ## Due dates (added to Google Calendar eddie7ch@gmail.com)
 
 Only one date currently published in the D2L calendar as of 2026-09-07 —

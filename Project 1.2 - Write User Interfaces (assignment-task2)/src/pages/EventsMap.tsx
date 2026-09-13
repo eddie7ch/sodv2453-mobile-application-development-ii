@@ -4,7 +4,7 @@ import * as Location from 'expo-location';
 import { useIsFocused } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
 import MapView, { LatLng, Marker } from 'react-native-maps';
 import customMapStyle from '../../map-style.json';
@@ -81,7 +81,9 @@ export default function EventsMap(props: StackScreenProps<any>) {
         return mapMarkerImg;
     };
 
-    const handleNavigateToCreateEvent = () => {};
+    const handleNavigateToCreateEvent = () => {
+        Alert.alert('Coming in Project 1.3', 'Creating events is part of the next project.');
+    };
 
     const handleNavigateToEventDetails = (event: Event) => {
         navigation.navigate('EventDetails', { event });
@@ -125,7 +127,7 @@ export default function EventsMap(props: StackScreenProps<any>) {
             </MapView>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>{events.length} event(s) found</Text>
+                <Text style={styles.footerText}>{events.length} {events.length === 1 ? 'event' : 'events'} found</Text>
                 <RectButton
                     style={[styles.smallButton, { backgroundColor: '#00A3FF' }]}
                     onPress={handleNavigateToCreateEvent}

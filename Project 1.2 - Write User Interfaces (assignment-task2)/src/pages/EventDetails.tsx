@@ -14,7 +14,7 @@ import * as api from '../services/api';
 import { getFromCache } from '../services/caching';
 import { Event } from '../types/Event';
 import { User } from '../types/User';
-import { formatAMPM, getEventStatus, getMapsUrl } from '../utils';
+import { formatAMPM, getEventStatus, getDirectionsUrl } from '../utils';
 
 export default function EventDetails({ route, navigation }: StackScreenProps<any>) {
     const routeEvent = (route.params as { event: Event }).event;
@@ -58,7 +58,7 @@ export default function EventDetails({ route, navigation }: StackScreenProps<any
     };
 
     const handleGetDirections = () => {
-        Linking.openURL(getMapsUrl(event.position));
+        Linking.openURL(getDirectionsUrl(event.position));
     };
 
     const handleVolunteer = async () => {

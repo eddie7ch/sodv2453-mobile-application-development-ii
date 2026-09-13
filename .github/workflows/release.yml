@@ -90,8 +90,42 @@ jobs:
         env:
           GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.GOOGLE_MAPS_API_KEY_ANDROID }}
 
+      # Release builds are signed with the project's own upload key, kept in two repository
+      # secrets. Without them the build falls back to the template's public debug key.
+      - name: Use the release signing key
+        working-directory: ${{ env.BUILD_DIR }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::warning::No signing key secrets set, so the APK is signed with the public debug key."
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
+          python3 - << 'PY'
+          import re
+          p = 'android/app/build.gradle'
+          s = open(p).read()
+          release = """        release {
+                      storeFile file('release.keystore')
+                      storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                      keyAlias 'volunteam'
+                      keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                  }
+          """
+          s = s.replace("signingConfigs {\n", "signingConfigs {\n" + release, 1)
+          s, n = re.subn(r"(release \{[^}]*?)signingConfig signingConfigs\.debug", r"\1signingConfig signingConfigs.release", s, count=1, flags=re.S)
+          assert n == 1, "release buildType not found"
+          open(p, 'w').write(s)
+          PY
+          echo "Release certificate:"
+          keytool -list -v -keystore android/app/release.keystore -storepass "$ANDROID_KEYSTORE_PASSWORD" | grep -E "SHA1:"
+
       - name: Build release APK and AAB
         working-directory: ${{ env.BUILD_DIR }}/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         # Only arm64 is compiled. Every current Android phone uses it, and building all
         # four CPU types took well over an hour on GitHub's free runners.
         # Lint is skipped here because the tests job already checks the code, and Gradle

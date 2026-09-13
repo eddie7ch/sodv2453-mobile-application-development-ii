@@ -1,5 +1,6 @@
 import axios, { AxiosResponse } from 'axios';
 
+/** HTTP client for the app's fake API (json-server). Every request goes to `baseURL`. */
 const api = axios.create({
     // Before running your 'json-server', get your computer's IP address and
     // update your baseURL to `http://your_ip_address_here:3333` and then run:
@@ -14,42 +15,15 @@ const api = axios.create({
     baseURL: 'http://192.168.1.156:3333',
 });
 
-// hits json-server-auth's /login route. On success response.data is
-// { accessToken, user }.
+/**
+ * Logs a user in against the fake API.
+ *
+ * @param email - The user's email address, already trimmed and lowercased.
+ * @param password - The user's password.
+ * @returns A promise with the server response. On success `response.data` has `user`
+ * (the user's details) and `accessToken` (a JWT). Rejects with a 400 error, whose
+ * `response.data` explains why, if the email isn't registered or the password is wrong.
+ */
 export const authenticateUser = (email: string, password: string): Promise<AxiosResponse> => {
     return api.post(`/login`, { email, password });
-};
-
-// returns every event, unfiltered - it's on the caller to drop past ones etc.
-// needs a token since /events is a protected route.
-export const getEvents = (accessToken: string): Promise<AxiosResponse> => {
-    return api.get(`/events`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-    });
-};
-
-// re-fetches one event by id, mainly so EventDetails isn't stuck showing
-// whatever was passed through navigation if it's gone stale
-export const getEventDetails = (eventId: string, accessToken: string): Promise<AxiosResponse> => {
-    return api.get(`/events/${eventId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-    });
-};
-
-// everything the CreateEvent form + GPS location collect, minus id
-// (server-assigned) and volunteersIds (starts empty on a new event)
-export interface NewEventData {
-    name: string;
-    description: string;
-    dateTime: string;
-    position: { latitude: number; longitude: number };
-    volunteersNeeded: number;
-    organizerId: string;
-    imageUrl?: string;
-}
-
-export const createEvent = (event: NewEventData, accessToken: string): Promise<AxiosResponse> => {
-    return api.post(`/events`, { ...event, volunteersIds: [] }, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-    });
 };

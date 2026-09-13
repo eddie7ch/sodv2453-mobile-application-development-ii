@@ -15,10 +15,19 @@ import { getFromCache, setInCache } from '../services/caching';
 import { User } from '../types/User';
 import { isTokenExpired, sanitizeEmail, validateEmail } from '../utils';
 
-// Entry screen. Checks the cache on mount and skips straight to
-// EventsMap if there's already a valid, unexpired session. Otherwise
-// this is just the email/password form, validated client-side before it
-// ever hits the API.
+/**
+ * Login screen, the first screen of the app.
+ *
+ * Responsibilities:
+ * - Lets a volunteer type their email and password and log in.
+ * - Checks both fields before calling the server, showing "invalid email" or
+ *   "invalid password" next to the field that's wrong.
+ * - Shows a spinner while logging in and an "Authentication Error" pop-up if the server refuses.
+ * - Saves the user and token on the phone, so someone with a valid token goes straight to the map next time.
+ *
+ * @param props - Stack screen props. `navigation` is used to open the EventsMap screen.
+ * @returns The login form.
+ */
 export default function Login({ navigation }: StackScreenProps<any>) {
     const authenticationContext = useContext(AuthenticationContext);
     const [email, setEmail] = useState('');
@@ -31,6 +40,7 @@ export default function Login({ navigation }: StackScreenProps<any>) {
     const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
     const isFocused = useIsFocused();
 
+    // Loads the saved user and token, and shows the error pop-up whenever authError is set.
     useEffect(() => {
         getFromCache('userInfo').then(
             (cachedUserInfo) => authenticationContext?.setValue(cachedUserInfo as User),
@@ -44,10 +54,16 @@ export default function Login({ navigation }: StackScreenProps<any>) {
             Alert.alert('Authentication Error', authError, [{ text: 'Ok', onPress: () => setAuthError(undefined) }]);
     }, [authError]);
 
+    // Skips the login form when a saved, unexpired token and user were found.
     useEffect(() => {
         if (accessTokenIsValid && authenticationContext?.value) navigation.navigate('EventsMap');
     }, [accessTokenIsValid]);
 
+    /**
+     * Runs when "Log in" is tapped. If the form is valid, sends the email and password to
+     * the server. On success saves the user and token and opens the map; on failure sets
+     * `authError` so the pop-up appears.
+     */
     const handleAuthentication = () => {
         if (formIsValid()) {
             setIsAuthenticating(true);
@@ -71,18 +87,33 @@ export default function Login({ navigation }: StackScreenProps<any>) {
         }
     };
 
+    /**
+     * Checks both fields at once, so both error messages can show together.
+     *
+     * @returns `true` only if the email and password are both valid.
+     */
     const formIsValid = () => {
         const emailIsValid = !isEmailInvalid();
         const passwordIsValid = !isPasswordInvalid();
         return emailIsValid && passwordIsValid;
     };
 
+    /**
+     * Checks the password is at least 6 characters and updates its error message.
+     *
+     * @returns `true` if the password is too short.
+     */
     const isPasswordInvalid = (): boolean => {
         const invalidCheck = password.length < 6;
         setPasswordIsInvalid(invalidCheck);
         return invalidCheck ? true : false;
     };
 
+    /**
+     * Checks the email format with `validateEmail` and updates its error message.
+     *
+     * @returns `true` if the email is badly formatted.
+     */
     const isEmailInvalid = (): boolean => {
         const invalidCheck = !validateEmail(email);
         setEmailIsInvalid(invalidCheck);

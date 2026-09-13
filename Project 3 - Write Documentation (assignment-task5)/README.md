@@ -1,138 +1,143 @@
 # Volunteam
 
-## Project scope and goal
+## What this project is
 
-Volunteam is a mobile app (React Native + Expo) that connects volunteers
-with local events that need help. A logged-in user sees a map of upcoming
-events near them, can tap one to see its details (description, date/time,
-how many volunteers are still needed), and can organize their own event,
-collecting a name, description, date/time, GPS location, and an optional
-photo, then publishing it for others to find.
+Volunteam is a mobile app that connects volunteers with local events that need
+help, like a park clean-up or a food bank shift.
 
-This repository is the SODV2453 (Mobile Application Development II)
-assessment sequence: each numbered project folder in the course's monorepo
-builds on the previous one's work. In this project's own folder specifically:
+**Goal:** make it easy for people to find volunteering events near them and
+sign up, and for organizers to post events and get the help they need.
 
-- **Login**: email/password auth against a fake API, with a cached
-  session so returning users skip straight past the login form.
-- **Events map**: fetches and displays upcoming events, colored by state
-  (open, full, or your own event).
-- **Event details**: full info for a single event.
-- **Create event**: a form that also reads the device's GPS location and
-  optionally attaches a photo, then publishes the event.
+**Scope of this version:** it's an early build with two working screens.
 
-## Requirements
+- **Login.** Volunteers log in with their email and password. The app checks
+  the fields before sending them, shows clear error messages, and remembers
+  the login so returning users go straight to the map.
+- **Events map.** Shows events as pins on a map of Calgary, with a count of
+  events at the bottom and a log out button at the top.
 
-- [Node.js](https://nodejs.org/) 20 or newer, and Yarn. The app is on Expo
-  SDK 57 (React Native 0.86), which won't run on Node 18.
-- An Android or iOS phone on the same Wi-Fi as your computer, or an
-  emulator.
-- To see the map on a real device you need an Expo **development build**
-  (see "Running on a phone" below). Plain Expo Go runs everything else, but
-  it can't render the map tiles for this version of `react-native-maps`.
-- A free [ImgBB](https://imgbb.com/signup) account if you want event photo
-  uploads.
+Not built yet: creating events (the "+" button), event details (tapping a
+pin) and loading real events from the server. The map uses sample pins for
+now.
+
+It's built with React Native and Expo (SDK 57), written in TypeScript. There's
+no real backend: a small fake API (`json-server`) serves the data in `db.json`.
+
+## Project structure
+
+| Folder | What's in it |
+|---|---|
+| `App.tsx` | Starting point. Loads fonts and the navigation. |
+| `src/pages` | The screens: `Login` and `EventsMap`. |
+| `src/components` | Reusable pieces: `BigButton` and `Spacer`. |
+| `src/routes` | `AppStack`, the list of screens and who is logged in. |
+| `src/context` | `AuthenticationContext`, shares the logged-in user with every screen. |
+| `src/services` | Talking to the outside world: the fake API, image uploads, and saving data on the phone. |
+| `src/utils` | Small helpers for dates, emails, maps and login tokens. |
+| `src/constants` | Map starting position and padding. |
+| `db.json` | The fake API's data: users and events. |
+
+Every function, component and screen has a comment above it explaining what
+it does, what it needs and what it gives back.
 
 ## Setting up the development environment
 
-1. Install dependencies:
-   ```
-   yarn install
-   ```
-   This also runs `patch-package`, which applies a small fix to `jest-expo`
-   (see "Running the tests").
-2. Set up the fake API, see below.
-3. (Optional) Set up image uploads, see below.
+You only need to do this once.
 
-### Fake API (`json-server`)
+### 1. Install the tools
 
-The app talks to `db.json` through `json-server` instead of a real backend.
-The `-m ./node_modules/json-server-auth` part matters: that's what adds the
-`/login` endpoint. Without it, logging in fails with a 404.
+- [Node.js](https://nodejs.org/) 20 or newer (Expo SDK 57 won't run on older versions).
+- Yarn: `npm install --global yarn`
+- An Android or iPhone on the same Wi-Fi as your computer, with the
+  **Expo Go** app installed. An Android emulator or iOS simulator works too.
 
-Find your computer's local IP address (`ipconfig` on Windows, look for the
-IPv4 address), then start the server:
+### 2. Get the code and install the packages
+
+```
+git clone <this repository's URL>
+cd "<this project's folder>"
+yarn install
+```
+
+### 3. Point the app at your computer
+
+The phone needs to reach the fake API running on your computer, so it needs
+your computer's local IP address, not `localhost`.
+
+1. Find your IP address. On Windows run `ipconfig` and look for "IPv4
+   Address" (something like `192.168.1.20`). On macOS run
+   `ipconfig getifaddr en0`.
+2. Open `src/services/api.ts` and set `baseURL` to
+   `http://<your_ip_address>:3333`.
+
+### 4. (Optional) Image uploads
+
+Image uploads aren't used by any screen yet, but `src/services/imageApi.ts` is
+ready for them. It uses [ImgBB](https://api.imgbb.com/):
+
+1. Sign up for free at https://imgbb.com/signup and create an API key.
+2. Create a file named `.env` in the project folder containing
+   `IMGBB_API_KEY=<your key>`. The file is ignored by git, so your key is never
+   committed.
+
+For builds made with EAS, add the key there instead with `eas secret:push`.
+
+## Running the application
+
+You need two terminals open in the project folder.
+
+**Terminal 1: start the fake API**
 
 ```
 npx json-server --watch db.json --port 3333 --host <your_ip_address> -m ./node_modules/json-server-auth
 ```
 
-Set `baseURL` in `src/services/api.ts` to `http://<your_ip_address>:3333`.
-It has to be your machine's real IP, not `localhost`, so a phone on the same
-Wi-Fi can reach it.
+Keep the `-m ./node_modules/json-server-auth` part. It adds the `/login`
+address the app logs in with; without it every login fails.
 
-Every seeded user's password is `123456` (for example
-`ulla.ulriksen@example.com`).
-
-The map only shows events whose date hasn't passed yet. If the seeded dates
-in `db.json` are in the past, the map will say "0 event(s) found", so move
-them into the future.
-
-Alternative, no local server needed: point `baseURL` at
-`https://my-json-server.typicode.com/<your-github-username>/<your-github-repo>`
-(requires `db.json` at the repo root). That one is read-only and doesn't
-support login.
-
-### Image upload API (ImgBB)
-
-Photo uploads go through `src/services/imageApi.ts`, which uses
-[ImgBB](https://api.imgbb.com/) by default.
-
-1. Sign up at https://imgbb.com/signup and create an API key.
-2. Put it in a `.env` file in this folder as `IMGBB_API_KEY=...`. The file
-   is gitignored, so the key never gets committed.
-
-Heads up: ImgBB sometimes blocks brand new accounts ("You have been
-forbidden to use this website", error 103), even on their own website. If
-that happens, swap the provider in `imageApi.ts`. Project 1.3 in this
-monorepo shows a working Cloudinary version.
-
-### Google Maps key (development build only)
-
-A development build needs its own Google Maps key or the map crashes with
-"API key not found".
-
-1. In Google Cloud, enable **Maps SDK for Android** and create an API key
-   restricted to that API.
-2. Add it to EAS as an environment variable named
-   `GOOGLE_MAPS_API_KEY_ANDROID` (`app.config.ts` reads it when building).
-
-## Running the app
+**Terminal 2: start the app**
 
 ```
 yarn start
 ```
 
-This starts Metro and shows a QR code. Scan it with Expo Go to run the app
-(everything except the map tiles works there).
+A QR code appears. On Android, scan it with Expo Go. On iPhone, scan it with
+the Camera app. The app opens on the login screen.
 
-### Running on a phone with the map (development build)
+**Log in** with any user from `db.json`. Every user's password is `123456`,
+for example `ulla.ulriksen@example.com`.
 
-1. Build the development client once with EAS:
+Known issue in this version: users whose email doesn't end in a
+three-letter ending like `.com` (for example `luigi@carluccio.it`) get
+"invalid email". This is fixed in a later project.
+
+### Seeing the map on a real phone
+
+Expo Go can run everything, but on some phones the map area stays blank
+because the map needs its own Google Maps key. To see it:
+
+1. In Google Cloud, enable **Maps SDK for Android** and create an API key.
+2. Save it in EAS as an environment variable named `GOOGLE_MAPS_API_KEY_ANDROID`.
+3. Build a development version of the app once and install it on the phone:
    ```
    npx eas-cli build --profile development --platform android
    ```
-   Install the APK it gives you on your phone.
-2. Start Metro in dev-client mode:
-   ```
-   npx expo start --dev-client
-   ```
-3. Open the installed app and pick your computer from the list of
-   development servers.
+4. Start the app with `npx expo start --dev-client` and open it from the
+   installed development app instead of Expo Go.
 
-You only rebuild when a native dependency changes. JavaScript changes just
-need a reload in the app.
+### Using an online fake API instead
 
-## Running the tests
+If you don't want to run `json-server`, set `baseURL` to
+`https://my-json-server.typicode.com/<your-github-username>/<your-github-repo>`
+(`db.json` must be at the root of that repo). It's read-only and doesn't
+support logging in, so it's only useful for browsing data.
 
-```
-yarn test
-```
+## Troubleshooting
 
-Runs the Jest unit tests (`jest-expo` preset), which cover `validateEmail`
-in `src/utils/index.ts`.
-
-The project folder name has parentheses in it, which breaks how `jest-expo`
-finds native module mocks. `patches/jest-expo+57.0.5.patch` fixes that and
-`jest.setup.js` stops Expo's `fetch` polyfill from crashing the run. Both
-are applied automatically, so you shouldn't have to think about them.
+- **"Network Error" or the spinner never stops when logging in:** the phone
+  can't reach the fake API. Check it's running, `baseURL` has your current IP
+  address, and both devices are on the same Wi-Fi.
+- **The app skips the login screen:** you're still logged in. Tap the log out
+  button on the map.
+- **"Authentication Error":** the email isn't in `db.json` or the password is
+  wrong.

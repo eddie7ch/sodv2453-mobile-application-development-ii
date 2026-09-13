@@ -7,15 +7,18 @@ const { Navigator, Screen } = createStackNavigator();
 
 import Login from '../pages/Login';
 import EventsMap from '../pages/EventsMap';
-import EventDetails from '../pages/EventDetails';
-import CreateEvent from '../pages/CreateEvent';
 import { AuthenticationContext, AuthenticationContextObject } from '../context/AuthenticationContext';
 import { User } from '../types/User';
 
-// Sets up the nav stack (Login -> EventsMap -> EventDetails/CreateEvent)
-// and holds the logged-in user in AuthenticationContext so any screen can
-// read it without passing it down manually. Headers are off everywhere,
-// each screen has its own back button.
+/**
+ * Navigation stack for the whole app.
+ *
+ * Responsibilities: holds the logged-in user in state and shares it through
+ * `AuthenticationContext`, and defines the screens users move between:
+ * `Login` (shown first) and `EventsMap`. Headers are hidden because each screen draws its own.
+ *
+ * @returns The navigation container with the authentication provider around it.
+ */
 export default function Routes() {
     const [authenticatedUser, setAuthenticatedUser] = useState<User>();
 
@@ -36,10 +39,6 @@ export default function Routes() {
                     <Screen name="Login" component={Login} />
 
                     <Screen name="EventsMap" component={EventsMap} />
-
-                    <Screen name="EventDetails" component={EventDetails} />
-
-                    <Screen name="CreateEvent" component={CreateEvent} />
                 </Navigator>
             </NavigationContainer>
         </AuthenticationContext.Provider>

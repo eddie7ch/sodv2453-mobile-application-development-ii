@@ -1,8 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useIsFocused } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useRef } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -10,77 +9,36 @@ import customMapStyle from '../../map-style.json';
 import * as MapSettings from '../constants/MapSettings';
 import { AuthenticationContext } from '../context/AuthenticationContext';
 import mapMarkerImg from '../images/map-marker.png';
-import mapMarkerBlueImg from '../images/map-marker-blue.png';
-import mapMarkerGreyImg from '../images/map-marker-grey.png';
-import * as api from '../services/api';
-import { getFromCache, getFromNetworkFirst } from '../services/caching';
-import { Event } from '../types/Event';
 
-// Home screen once logged in. Loads upcoming events (network-first, past
-// ones filtered out), fits the map to whatever's left, and colors each
-// marker by state - grey if it's full, blue if it's yours, default
-// otherwise. Marker tap goes to EventDetails, the "+" button to
-// CreateEvent, and logout clears the cached session back to Login.
+/**
+ * Events map screen, shown after logging in.
+ *
+ * Responsibilities:
+ * - Shows volunteer events as markers on a Google map, zoomed so every marker fits.
+ * - Shows a footer with the number of events and a "+" button for creating an event.
+ * - Logs the user out with the button in the top right.
+ *
+ * Creating events and opening event details aren't built yet, so those handlers are empty,
+ * and the markers come from the sample `events` list at the bottom of this file.
+ *
+ * @param props - Stack screen props. `navigation` is used to go back to Login on logout.
+ * @returns The full-screen map with its buttons.
+ */
 export default function EventsMap(props: StackScreenProps<any>) {
     const { navigation } = props;
     const authenticationContext = useContext(AuthenticationContext);
     const mapViewRef = useRef<MapView>(null);
-    const isFocused = useIsFocused();
 
-    const [events, setEvents] = useState<Event[]>([]);
+    /** Will open the screen for creating a new event. Not built yet. */
+    const handleNavigateToCreateEvent = () => {};
 
-    useEffect(() => {
-        if (isFocused) {
-            loadEvents();
-        }
-    }, [isFocused]);
+    /** Will open the details of the tapped event. Not built yet. */
+    const handleNavigateToEventDetails = () => {};
 
-    useEffect(() => {
-        if (events.length > 0) {
-            mapViewRef.current?.fitToCoordinates(
-                events.map(({ position }) => ({
-                    latitude: position.latitude,
-                    longitude: position.longitude,
-                })),
-                { edgePadding: MapSettings.EDGE_PADDING }
-            );
-        }
-    }, [events]);
-
-    const loadEvents = () => {
-        // Consume data: fetch from the internet first, save the response in cache,
-        // and fall back to whatever is cached if the network request fails.
-        getFromCache<string>('accessToken')
-            .then((accessToken) => getFromNetworkFirst('events', api.getEvents(accessToken)))
-            .then((response) => {
-                // Past events should not be displayed in the map.
-                const now = Date.now();
-                const upcomingEvents = response.data.filter(
-                    (event: Event) => new Date(event.dateTime).getTime() >= now
-                );
-                setEvents(upcomingEvents);
-            })
-            .catch((error: any) => console.log(error));
-    };
-
-    const getMarkerImage = (event: Event) => {
-        const isEventFull = event.volunteersIds.length >= event.volunteersNeeded;
-        if (isEventFull) return mapMarkerGreyImg;
-
-        const isOwnEvent = event.organizerId === authenticationContext?.value?.id;
-        if (isOwnEvent) return mapMarkerBlueImg;
-
-        return mapMarkerImg;
-    };
-
-    const handleNavigateToCreateEvent = () => {
-        navigation.navigate('CreateEvent');
-    };
-
-    const handleNavigateToEventDetails = (event: Event) => {
-        navigation.navigate('EventDetails', { event });
-    };
-
+    /**
+     * Logs the user out: removes the saved user and token from the phone, clears the
+     * logged-in user from the app, and returns to the Login screen.
+     */
     const handleLogout = async () => {
         AsyncStorage.multiRemove(['userInfo', 'accessToken']).then(() => {
             authenticationContext?.setValue(undefined);
@@ -102,6 +60,15 @@ export default function EventsMap(props: StackScreenProps<any>) {
                 toolbarEnabled={false}
                 moveOnMarkerPress={false}
                 mapPadding={MapSettings.EDGE_PADDING}
+                onLayout={() =>
+                    mapViewRef.current?.fitToCoordinates(
+                        events.map(({ position }) => ({
+                            latitude: position.latitude,
+                            longitude: position.longitude,
+                        })),
+                        { edgePadding: MapSettings.EDGE_PADDING }
+                    )
+                }
             >
                 {events.map((event) => {
                     return (
@@ -111,16 +78,16 @@ export default function EventsMap(props: StackScreenProps<any>) {
                                 latitude: event.position.latitude,
                                 longitude: event.position.longitude,
                             }}
-                            onPress={() => handleNavigateToEventDetails(event)}
+                            onPress={handleNavigateToEventDetails}
                         >
-                            <Image resizeMode="contain" style={{ width: 48, height: 54 }} source={getMarkerImage(event)} />
+                            <Image resizeMode="contain" style={{ width: 48, height: 54 }} source={mapMarkerImg} />
                         </Marker>
                     );
                 })}
             </MapView>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>{events.length} event(s) found</Text>
+                <Text style={styles.footerText}>X event(s) found</Text>
                 <RectButton
                     style={[styles.smallButton, { backgroundColor: '#00A3FF' }]}
                     onPress={handleNavigateToCreateEvent}
@@ -190,3 +157,46 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
+
+/** Minimal event shape used by the sample data below: just enough to place a marker. */
+interface event {
+    /** Unique event ID, used as the marker's key. */
+    id: string;
+    /** Where the event happens. */
+    position: {
+        latitude: number;
+        longitude: number;
+    };
+}
+
+/** Sample events around Calgary, shown until the map loads real events from the API. */
+const events: event[] = [
+    {
+        id: 'e3c95682-870f-4080-a0d7-ae8e23e2534f',
+        position: {
+            latitude: 51.105761,
+            longitude: -114.106943,
+        },
+    },
+    {
+        id: '98301b22-2b76-44f1-a8da-8c86c56b0367',
+        position: {
+            latitude: 51.04112,
+            longitude: -114.069325,
+        },
+    },
+    {
+        id: 'd7b8ea73-ba2c-4fc3-9348-9814076124bd',
+        position: {
+            latitude: 51.01222958257112,
+            longitude: -114.11677222698927,
+        },
+    },
+    {
+        id: 'd1a6b9ea-877d-4711-b8d7-af8f1bce4d29',
+        position: {
+            latitude: 51.010801915407036,
+            longitude: -114.07823592424393,
+        },
+    },
+];

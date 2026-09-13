@@ -1,7 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
@@ -9,15 +10,71 @@ import customMapStyle from '../../map-style.json';
 import * as MapSettings from '../constants/MapSettings';
 import { AuthenticationContext } from '../context/AuthenticationContext';
 import mapMarkerImg from '../images/map-marker.png';
+import mapMarkerBlueImg from '../images/map-marker-blue.png';
+import mapMarkerGreyImg from '../images/map-marker-grey.png';
+import * as api from '../services/api';
+import { getFromCache, getFromNetworkFirst } from '../services/caching';
+import { Event } from '../types/Event';
 
 export default function EventsMap(props: StackScreenProps<any>) {
     const { navigation } = props;
     const authenticationContext = useContext(AuthenticationContext);
     const mapViewRef = useRef<MapView>(null);
+    const isFocused = useIsFocused();
 
-    const handleNavigateToCreateEvent = () => {};
+    const [events, setEvents] = useState<Event[]>([]);
 
-    const handleNavigateToEventDetails = () => {};
+    useEffect(() => {
+        if (isFocused) {
+            loadEvents();
+        }
+    }, [isFocused]);
+
+    useEffect(() => {
+        if (events.length > 0) {
+            mapViewRef.current?.fitToCoordinates(
+                events.map(({ position }) => ({
+                    latitude: position.latitude,
+                    longitude: position.longitude,
+                })),
+                { edgePadding: MapSettings.EDGE_PADDING }
+            );
+        }
+    }, [events]);
+
+    const loadEvents = () => {
+        // Consume data: fetch from the internet first, save the response in cache,
+        // and fall back to whatever is cached if the network request fails.
+        getFromCache<string>('accessToken')
+            .then((accessToken) => getFromNetworkFirst('events', api.getEvents(accessToken)))
+            .then((response) => {
+                // Past events should not be displayed in the map.
+                const now = Date.now();
+                const upcomingEvents = response.data.filter(
+                    (event: Event) => new Date(event.dateTime).getTime() >= now
+                );
+                setEvents(upcomingEvents);
+            })
+            .catch((error: any) => console.log(error));
+    };
+
+    const getMarkerImage = (event: Event) => {
+        const isEventFull = event.volunteersIds.length >= event.volunteersNeeded;
+        if (isEventFull) return mapMarkerGreyImg;
+
+        const isOwnEvent = event.organizerId === authenticationContext?.value?.id;
+        if (isOwnEvent) return mapMarkerBlueImg;
+
+        return mapMarkerImg;
+    };
+
+    const handleNavigateToCreateEvent = () => {
+        navigation.navigate('SelectEventLocation');
+    };
+
+    const handleNavigateToEventDetails = (event: Event) => {
+        navigation.navigate('EventDetails', { event });
+    };
 
     const handleLogout = async () => {
         AsyncStorage.multiRemove(['userInfo', 'accessToken']).then(() => {
@@ -40,15 +97,6 @@ export default function EventsMap(props: StackScreenProps<any>) {
                 toolbarEnabled={false}
                 moveOnMarkerPress={false}
                 mapPadding={MapSettings.EDGE_PADDING}
-                onLayout={() =>
-                    mapViewRef.current?.fitToCoordinates(
-                        events.map(({ position }) => ({
-                            latitude: position.latitude,
-                            longitude: position.longitude,
-                        })),
-                        { edgePadding: MapSettings.EDGE_PADDING }
-                    )
-                }
             >
                 {events.map((event) => {
                     return (
@@ -58,16 +106,16 @@ export default function EventsMap(props: StackScreenProps<any>) {
                                 latitude: event.position.latitude,
                                 longitude: event.position.longitude,
                             }}
-                            onPress={handleNavigateToEventDetails}
+                            onPress={() => handleNavigateToEventDetails(event)}
                         >
-                            <Image resizeMode="contain" style={{ width: 48, height: 54 }} source={mapMarkerImg} />
+                            <Image resizeMode="contain" style={{ width: 48, height: 54 }} source={getMarkerImage(event)} />
                         </Marker>
                     );
                 })}
             </MapView>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>X event(s) found</Text>
+                <Text style={styles.footerText}>{events.length} {events.length === 1 ? 'event' : 'events'} found</Text>
                 <RectButton
                     style={[styles.smallButton, { backgroundColor: '#00A3FF' }]}
                     onPress={handleNavigateToCreateEvent}
@@ -87,14 +135,14 @@ export default function EventsMap(props: StackScreenProps<any>) {
 
 const styles = StyleSheet.create({
     container: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         flex: 1,
         justifyContent: 'flex-end',
         alignItems: 'center',
     },
 
     mapStyle: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
     },
 
     logoutButton: {
@@ -137,42 +185,3 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 });
-
-interface event {
-    id: string;
-    position: {
-        latitude: number;
-        longitude: number;
-    };
-}
-
-const events: event[] = [
-    {
-        id: 'e3c95682-870f-4080-a0d7-ae8e23e2534f',
-        position: {
-            latitude: 51.105761,
-            longitude: -114.106943,
-        },
-    },
-    {
-        id: '98301b22-2b76-44f1-a8da-8c86c56b0367',
-        position: {
-            latitude: 51.04112,
-            longitude: -114.069325,
-        },
-    },
-    {
-        id: 'd7b8ea73-ba2c-4fc3-9348-9814076124bd',
-        position: {
-            latitude: 51.01222958257112,
-            longitude: -114.11677222698927,
-        },
-    },
-    {
-        id: 'd1a6b9ea-877d-4711-b8d7-af8f1bce4d29',
-        position: {
-            latitude: 51.010801915407036,
-            longitude: -114.07823592424393,
-        },
-    },
-];

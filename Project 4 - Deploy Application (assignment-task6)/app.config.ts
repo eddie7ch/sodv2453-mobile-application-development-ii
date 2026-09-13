@@ -3,21 +3,25 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
 export default ({ config }: ConfigContext): ExpoConfig => ({
     ...config,
     name: 'volunteam',
-    slug: 'volunteam',
+    slug: 'volunteam-4-deploy',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
-    splash: {
-        image: './assets/splash.png',
-        resizeMode: 'cover',
-        backgroundColor: '#031A62',
-    },
     updates: {
         fallbackToCacheTimeout: 0,
     },
     assetBundlePatterns: ['**/*'],
     ios: {
         supportsTablet: true,
+        bundleIdentifier: 'com.eddie7ch.volunteam4deploy',
+    },
+    android: {
+        package: 'com.eddie7ch.volunteam4deploy',
+        config: {
+            googleMaps: {
+                apiKey: process.env.GOOGLE_MAPS_API_KEY_ANDROID,
+            },
+        },
     },
     web: {
         favicon: './assets/favicon.png',
@@ -30,11 +34,19 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
                 cameraPermission: 'The app accesses your camera to let you add pictures to events.',
             },
         ],
+        '@react-native-community/datetimepicker',
+        'expo-font',
+        'expo-status-bar',
+        [
+            'expo-splash-screen',
+            {
+                image: './assets/splash.png',
+                resizeMode: 'cover',
+                backgroundColor: '#031A62',
+            },
+        ],
     ],
     extra: {
-        eas: {
-            projectId: '954f3b8e-1155-4f8f-8601-a2b3126da39e',
-        },
         IMGBB_API_KEY: process.env.IMGBB_API_KEY,
     },
 });

@@ -89,3 +89,12 @@ export const isTokenExpired = (token: string) => {
         return false;
     }
 };
+
+export type EventStatus = 'volunteered' | 'open' | 'full';
+
+// Order matters: someone who volunteered should see "volunteered" even once the team fills up
+export const getEventStatus = (volunteersIds: string[], volunteersNeeded: number, userId?: string): EventStatus => {
+    if (userId && volunteersIds.includes(userId)) return 'volunteered';
+    if (volunteersIds.length >= volunteersNeeded) return 'full';
+    return 'open';
+};

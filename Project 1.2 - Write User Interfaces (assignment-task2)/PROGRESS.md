@@ -45,3 +45,23 @@ now everything works end to end on the actual phone: login, the 3 event
 markers show up on the map with the right colors (grey for full events,
 orange for open ones that aren't mine), and tapping a marker opens Event
 Details with the correct image, date, description, and volunteer count.
+
+## What I learned
+
+Type-checking clean doesn't mean the app works. Everything compiled fine,
+and it still wouldn't even open on my phone because the starter was on an
+Expo SDK that Expo Go stopped supporting. Running it on a real device early
+would have saved me a lot of back and forth.
+
+A blank screen isn't always your code. The map was black with no error, and
+it turned out Expo Go can't render Google Maps tiles for this version of
+react-native-maps. The fix was a development build plus a real API key, not
+anything in EventsMap.tsx. Next time I'll check whether a problem is the
+environment before digging through my own components.
+
+Read the setup instructions properly. I lost time on a login 404 because I
+started json-server without the json-server-auth middleware, and the README
+already had the right command.
+
+Seed data goes stale. Every sample event was dated 2022 or 2023, so the map
+filtered them all out and looked broken. The filter was doing its job.

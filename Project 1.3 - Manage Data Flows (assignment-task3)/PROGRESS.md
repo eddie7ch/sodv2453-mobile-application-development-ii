@@ -88,3 +88,26 @@ event loading, creating an event with GPS location and a photo, the new
 event showing up with its photo, and signing up to volunteer (confirmed
 the id actually saved in db.json, not just on screen). Cleaned the test
 events back out of db.json afterward.
+
+## What I learned
+
+A generic error message hides the real problem. "Could not create the
+event" turned out to be the photo upload failing, not the event itself.
+Showing the actual error on screen for a minute found it quickly. I also
+learned to check the server log: the POST never showed up there, which
+meant the request wasn't even reaching my API.
+
+One optional step shouldn't break the main action. If the photo fails, the
+event should still save. I changed the code so they're handled separately.
+
+Third-party services can fail for reasons you can't fix. ImgBB blocked my
+new account outright, so I switched to Cloudinary. Keeping the upload code
+in one small file (imageApi.ts) made that swap easy.
+
+Platforms behave differently. The date picker worked in theory but crashed
+on Android, because Android has no combined date and time picker. Things
+like this only show up when you test on the platform itself.
+
+Memory matters on a phone. Holding full-size base64 photos made the image
+picker crash after a few tries. Lowering the quality and clearing old
+images fixed it.

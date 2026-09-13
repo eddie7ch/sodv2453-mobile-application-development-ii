@@ -97,3 +97,21 @@ I wanted to change unilaterally since it's the assignment folder itself.
 Since GitHub Actions checks out to a path that will still contain the same
 folder name, the "Run tests" step in the workflow will very likely fail the
 same way in CI until this gets sorted out.
+
+## What I learned
+
+The first deployment failed on permissions. The workflow couldn't attach
+the build to the release until I gave it `contents: write`. Reading the
+Actions log line by line is what showed the real error.
+
+Upgrades affect the pipeline too. Moving to Expo SDK 57 meant React Native
+0.86, which won't run on Node 18, so the workflow had to move to Node 20.
+It would have failed on the next release if I hadn't caught it.
+
+Run the pipeline's steps locally before publishing. I ran the same install,
+test, type-check, and export commands on my computer before creating
+v1.1.0, so a failure would show up privately instead of as a broken public
+release.
+
+Release notes are for people, not just git. Writing out the new features
+and bug fixes in the release form makes it clear what changed and why.

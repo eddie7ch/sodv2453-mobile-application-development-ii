@@ -61,3 +61,23 @@ LAN IP and moved three of the seeded events to future dates (they were
 2022/2023, so the map was hiding them as past events). Logged in as Luigi,
 John, and Ulla, and all three worked. Details are at the bottom of
 TEST_SCRIPT.md.
+
+## What I learned
+
+Reproduce the bug before fixing it. I wrote the failing test first, so I
+knew the test actually caught the problem and wasn't just passing by
+accident.
+
+The bug only showed up with the right data. Most seeded users had .com
+emails, so the regex looked fine. Luigi's .it and John's .com.br were what
+exposed it. Tests should include the unusual cases, not just the common one.
+
+Test the case that used to work, too. Checking Ulla's normal .com address
+made sure widening the regex didn't break anything else.
+
+Unit tests aren't the whole story. After the tests passed, I still logged
+in as all three users on my phone to confirm the fix works in the real app.
+
+Tooling breaks in weird ways. The folder name having parentheses broke
+jest-expo after the SDK upgrade. I learned how to patch a dependency with
+patch-package so the fix sticks after every install.

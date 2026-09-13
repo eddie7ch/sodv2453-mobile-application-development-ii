@@ -73,11 +73,12 @@ export const getEnvironentVariable = (variableName: string) => {
     }
 };
 
-export const getMapsUrl = (coordinates: LatLng): string => {
-    const { latitude, longitude } = coordinates;
-    const latLng = `${latitude},${longitude}`;
-    const label = 'Custom Label';
-    return Platform.OS === 'ios' ? `maps:0,0?q=${label}@${latLng}` : `geo:0,0?q=${latLng}(${label})`;
+// Opens turn-by-turn directions from wherever the user is to the event
+export const getDirectionsUrl = (destination: LatLng): string => {
+    const latLng = `${destination.latitude},${destination.longitude}`;
+    return Platform.OS === 'ios'
+        ? `maps://?daddr=${latLng}&dirflg=d`
+        : `https://www.google.com/maps/dir/?api=1&destination=${latLng}`;
 };
 
 export const isTokenExpired = (token: string) => {
@@ -88,4 +89,13 @@ export const isTokenExpired = (token: string) => {
     } else {
         return false;
     }
+};
+
+export type EventStatus = 'volunteered' | 'open' | 'full';
+
+// Order matters: someone who volunteered should see "volunteered" even once the team fills up
+export const getEventStatus = (volunteersIds: string[], volunteersNeeded: number, userId?: string): EventStatus => {
+    if (userId && volunteersIds.includes(userId)) return 'volunteered';
+    if (volunteersIds.length >= volunteersNeeded) return 'full';
+    return 'open';
 };

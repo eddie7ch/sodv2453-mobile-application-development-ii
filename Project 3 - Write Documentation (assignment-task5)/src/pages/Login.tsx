@@ -15,19 +15,10 @@ import { getFromCache, setInCache } from '../services/caching';
 import { User } from '../types/User';
 import { isTokenExpired, sanitizeEmail, validateEmail } from '../utils';
 
-/**
- * The email/password login form, and the app's entry screen.
- *
- * Responsibilities:
- * - On mount, checks for a cached user + access token and, if the token
- *   isn't expired, skips straight to `EventsMap` instead of showing the form.
- * - Validates email/password client-side (via `validateEmail`, a minimum
- *   password length) before calling the API, so obviously-invalid input
- *   never reaches the server.
- * - On success, caches the user and access token and navigates to
- *   `EventsMap`; on failure, surfaces the server's error message via an
- *   `Alert`.
- */
+// Entry screen. Checks the cache on mount and skips straight to
+// EventsMap if there's already a valid, unexpired session. Otherwise
+// this is just the email/password form, validated client-side before it
+// ever hits the API.
 export default function Login({ navigation }: StackScreenProps<any>) {
     const authenticationContext = useContext(AuthenticationContext);
     const [email, setEmail] = useState('');

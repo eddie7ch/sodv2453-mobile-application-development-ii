@@ -10,22 +10,13 @@ import { getFromCache } from '../services/caching';
 import { Event } from '../types/Event';
 import { formatAMPM } from '../utils';
 
-/**
- * Shows the full details of a single event: image, name, date/time,
- * description, and remaining volunteer slots.
- *
- * Responsibilities:
- * - Receives the tapped event via the `EventsMap` → `EventDetails`
- *   navigation param (`route.params.event`) so something renders
- *   immediately, then re-fetches that same event by id from the API so the
- *   screen isn't stuck showing possibly-stale data.
- * - Disables the "I want to volunteer" button once the event has no
- *   remaining slots.
- *
- * The volunteer-application submission itself is intentionally not wired up
- * here (button is a stub) — collecting and sending that data is Project
- * 1.3's "Collect data" rubric criterion, not this screen's job.
- */
+// Shows a single event: image, name, date/time, description, remaining
+// slots. Renders whatever got passed through navigation right away, then
+// re-fetches by id in case it's stale. Volunteer button gets disabled
+// once the event's full.
+//
+// Note: the button doesn't actually submit anything yet, it's a stub.
+// That's Project 1.3's job (collect data), not this screen's.
 export default function EventDetails({ route, navigation }: StackScreenProps<any>) {
     const routeEvent = (route.params as { event: Event }).event;
     const [event, setEvent] = useState<Event>(routeEvent);
@@ -40,7 +31,7 @@ export default function EventDetails({ route, navigation }: StackScreenProps<any
     const volunteersNeeded = event.volunteersNeeded - event.volunteersIds.length;
     const isEventFull = volunteersNeeded <= 0;
 
-    // Submitting a volunteer application is implemented in Project 1.3 (Manage Data Flows) —
+    // Submitting a volunteer application is implemented in Project 1.3 (Manage Data Flows),
     // this project only covers displaying the event details UI and navigating to/from it.
     const handleApplyToVolunteer = () => {
         Alert.alert('Coming soon', 'Applying to volunteer will be implemented in Project 1.3.');

@@ -15,21 +15,10 @@ import { uploadImage } from '../services/imageApi';
 import { getFromCache } from '../services/caching';
 import { castToNumber, formatAMPM } from '../utils';
 
-/**
- * A form for organizing a new volunteer event: name, description, number of
- * volunteers needed, date/time, location, and an optional photo.
- *
- * Responsibilities:
- * - Collects the location via the device's GPS sensor (`expo-location`)
- *   rather than a text field, and the photo via the device's photo library
- *   (`expo-image-picker`) — this is Project 1.3's "Collect data" rubric
- *   criterion: acquire data from users via forms, read a sensor, send the
- *   result to the internet.
- * - Uploads the picked image to ImgBB first (if one was picked), then POSTs
- *   the full event — including the returned image URL — to the API.
- * - Requests the relevant permission (location / photo library) before each
- *   sensor read, and surfaces a clear alert if permission is denied.
- */
+// Form for creating a new event. Location comes from the GPS instead of
+// a text field, photo is optional and gets uploaded to ImgBB before the
+// event itself gets posted. Asks for location/photo permission first and
+// alerts if either gets denied.
 export default function CreateEvent({ navigation }: StackScreenProps<any>) {
     const authenticationContext = useContext(AuthenticationContext);
 

@@ -1,73 +1,155 @@
-name: Build and attach release (Project 4)
+name: Release build (volunteam)
 
-# Trigger automated deployment: this workflow runs automatically whenever a
-# new GitHub Release is published for this repo (filling in the release
-# form on GitHub — tag, title, and a description of what changed — is what
-# triggers it).
+# Runs when a release is published on GitHub. Tests go first, and the Android and
+# iOS builds only start if every test passes. The finished binaries are attached
+# to the release so the deployment team can download them from the release page.
 #
-# Note on where this file lives: this repo is a monorepo holding all 6
-# SODV2453 course projects as subfolders (see repo root README/course-info.md).
-# GitHub Actions only ever reads workflows from .github/workflows at the
-# repo ROOT, so this file has to live here rather than inside
-# "Project 4 - Deploy Application (assignment-task6)/" itself — every step
-# below scopes into that folder via `working-directory` instead.
+# This repo holds every course project, and GitHub only reads workflows from the
+# root .github folder, so each step changes into the Project 4 folder.
+#
+# "Run workflow" (workflow_dispatch) is there to try a build without publishing a
+# release. Those runs keep the files as workflow artifacts instead.
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
-# Needed to upload the build zip as a release asset — without this, the
-# default GITHUB_TOKEN is read-only and the last step fails with
-# "Resource not accessible by integration".
 permissions:
-  contents: write
+  contents: write # needed to upload files to the release
+
+env:
+  APP_DIR: "Project 4 - Deploy Application (assignment-task6)"
+  NODE_VERSION: 20
 
 defaults:
   run:
+    shell: bash
     working-directory: "Project 4 - Deploy Application (assignment-task6)"
 
 jobs:
-  build:
-    name: Maintain automated deployment workflow
+  test:
+    name: Run unit tests
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ env.NODE_VERSION }}
           cache: yarn
-          cache-dependency-path: "Project 4 - Deploy Application (assignment-task6)/yarn.lock"
+          cache-dependency-path: ${{ env.APP_DIR }}/yarn.lock
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Run tests
-        run: yarn test
+      - name: Unit tests
+        run: yarn test --ci
 
-      - name: Type-check
+      - name: Type check
         run: npx tsc --noEmit
 
-      # Build application file(s): produces the JS bundle + assets for each
-      # platform via Expo's static export (no EAS account/credentials
-      # needed, so this runs standalone in CI).
-      - name: Export Android bundle
-        run: npx expo export --platform android --output-dir dist/android
-        env:
-          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+  android:
+    name: Build Android (APK and AAB)
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Export iOS bundle
-        run: npx expo export --platform ios --output-dir dist/ios
-        env:
-          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
-
-      - name: Zip build output
-        run: |
-          cd dist
-          zip -r "../volunteam-${{ github.event.release.tag_name }}.zip" .
-
-      - name: Attach build files to the GitHub Release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/setup-node@v4
         with:
-          files: "Project 4 - Deploy Application (assignment-task6)/volunteam-${{ github.event.release.tag_name }}.zip"
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: ${{ env.APP_DIR }}/yarn.lock
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Generate the native Android project
+        run: npx expo prebuild --platform android --no-install
+        env:
+          GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.GOOGLE_MAPS_API_KEY_ANDROID }}
+
+      - name: Build release APK and AAB
+        working-directory: ${{ env.APP_DIR }}/android
+        run: ./gradlew assembleRelease bundleRelease --no-daemon
+
+      - name: Collect binaries
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk out/volunteam-android.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab out/volunteam-android.aab
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: ${{ env.APP_DIR }}/out/*
+          if-no-files-found: error
+
+  ios:
+    name: Build iOS (simulator app)
+    needs: test
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: ${{ env.APP_DIR }}/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Generate the native iOS project
+        run: npx expo prebuild --platform ios
+
+      # Signing for the App Store needs the team's Apple Developer account, which the
+      # deployment team owns. This builds an unsigned Release app instead, which runs in
+      # the iOS Simulator and can be signed later.
+      - name: Build release app
+        run: |
+          workspace=$(ls -d ios/*.xcworkspace)
+          scheme=$(basename "$workspace" .xcworkspace)
+          xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
+            -sdk iphonesimulator -derivedDataPath ios/build \
+            CODE_SIGNING_ALLOWED=NO | tail -n 50
+          test ${PIPESTATUS[0]} -eq 0
+
+      - name: Collect binaries
+        run: |
+          mkdir -p out
+          cd ios/build/Build/Products/Release-iphonesimulator
+          zip -qry "$GITHUB_WORKSPACE/$APP_DIR/out/volunteam-ios-simulator.zip" *.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: ${{ env.APP_DIR }}/out/*
+          if-no-files-found: error
+
+  release:
+    name: Attach binaries to the release
+    needs: [android, ios]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: binaries
+          merge-multiple: true
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" binaries/* --repo "${{ github.repository }}" --clobber

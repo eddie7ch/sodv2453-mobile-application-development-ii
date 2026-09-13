@@ -88,14 +88,14 @@ export const sanitizeEmail = (email: string): string => {
  */
 export const validateEmail = (email: string): boolean => {
     if (!email) return false;
-    // The TLD group used to be `\.\w{3}` (exactly 3 characters), which rejected any
-    // real address ending in a 2-letter country-code TLD (e.g. "luigi@carluccio.it",
-    // or "john@silva.com.br", where the final label ".br" is only 2 characters).
-    // Widened to `\.\w{2,}` (2 or more) so these are accepted again.
-    const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,})+$/;
-    const sanitizedEmail = email.trim().toLowerCase();
-    const result = sanitizedEmail.match(regex);
-    return !!result?.[0];
+    // Two bugs lived in this regex, both rejecting real addresses as "invalid email":
+    // 1. The domain ending was `(\.\w{3})+`, so every part after the first dot had to be
+    //    exactly 3 characters. That blocked 2-letter endings like luigi@carluccio.it and
+    //    john@silva.com.br, and longer ones like .info. It's `\.\w{2,}` now.
+    // 2. The part before the @ only allowed letters, digits, _, dots and dashes, so addresses with
+    //    + or an apostrophe (bob+news@gmail.com, o'brien@example.ie) were rejected too.
+    const regex = /^[\w+']+([.-][\w+']+)*@\w+([.-]?\w+)*(\.\w{2,})+$/;
+    return regex.test(sanitizeEmail(email));
 };
 
 /**

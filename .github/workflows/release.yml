@@ -68,19 +68,30 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # The project folder's name has spaces and brackets, which some native build
+      # scripts can't handle, so the native build runs from a copy at a plain path.
+      - name: Copy the app to a path without spaces
+        run: |
+          mkdir -p "$HOME/volunteam"
+          cp -R . "$HOME/volunteam"
+          echo "BUILD_DIR=$HOME/volunteam" >> "$GITHUB_ENV"
+
       - name: Install dependencies
+        working-directory: ${{ env.BUILD_DIR }}
         run: yarn install --frozen-lockfile
 
       - name: Generate the native Android project
+        working-directory: ${{ env.BUILD_DIR }}
         run: npx expo prebuild --platform android --no-install
         env:
           GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.GOOGLE_MAPS_API_KEY_ANDROID }}
 
       - name: Build release APK and AAB
-        working-directory: ${{ env.APP_DIR }}/android
+        working-directory: ${{ env.BUILD_DIR }}/android
         run: ./gradlew assembleRelease bundleRelease --no-daemon
 
       - name: Collect binaries
+        working-directory: ${{ env.BUILD_DIR }}
         run: |
           mkdir -p out
           cp android/app/build/outputs/apk/release/app-release.apk out/volunteam-android.apk
@@ -89,7 +100,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: android
-          path: ${{ env.APP_DIR }}/out/*
+          path: ${{ env.BUILD_DIR }}/out/*
           if-no-files-found: error
 
   ios:
@@ -105,34 +116,49 @@ jobs:
           cache: yarn
           cache-dependency-path: ${{ env.APP_DIR }}/yarn.lock
 
+      # The project folder's name has spaces and brackets, which some native build
+      # scripts can't handle, so the native build runs from a copy at a plain path.
+      - name: Copy the app to a path without spaces
+        run: |
+          mkdir -p "$HOME/volunteam"
+          cp -R . "$HOME/volunteam"
+          echo "BUILD_DIR=$HOME/volunteam" >> "$GITHUB_ENV"
+
       - name: Install dependencies
+        working-directory: ${{ env.BUILD_DIR }}
         run: yarn install --frozen-lockfile
 
       - name: Generate the native iOS project
+        working-directory: ${{ env.BUILD_DIR }}
         run: npx expo prebuild --platform ios
 
       # Signing for the App Store needs the team's Apple Developer account, which the
       # deployment team owns. This builds an unsigned Release app instead, which runs in
       # the iOS Simulator and can be signed later.
       - name: Build release app
+        working-directory: ${{ env.BUILD_DIR }}
         run: |
           workspace=$(ls -d ios/*.xcworkspace)
           scheme=$(basename "$workspace" .xcworkspace)
           xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
             -sdk iphonesimulator -derivedDataPath ios/build \
-            CODE_SIGNING_ALLOWED=NO | tail -n 50
-          test ${PIPESTATUS[0]} -eq 0
+            CODE_SIGNING_ALLOWED=NO > xcodebuild.log 2>&1 || {
+            grep -nE "error:|Error|failed" xcodebuild.log | tail -n 60
+            tail -n 80 xcodebuild.log
+            exit 1
+          }
 
       - name: Collect binaries
+        working-directory: ${{ env.BUILD_DIR }}
         run: |
           mkdir -p out
           cd ios/build/Build/Products/Release-iphonesimulator
-          zip -qry "$GITHUB_WORKSPACE/$APP_DIR/out/volunteam-ios-simulator.zip" *.app
+          zip -qry "$BUILD_DIR/out/volunteam-ios-simulator.zip" *.app
 
       - uses: actions/upload-artifact@v4
         with:
           name: ios
-          path: ${{ env.APP_DIR }}/out/*
+          path: ${{ env.BUILD_DIR }}/out/*
           if-no-files-found: error
 
   release:

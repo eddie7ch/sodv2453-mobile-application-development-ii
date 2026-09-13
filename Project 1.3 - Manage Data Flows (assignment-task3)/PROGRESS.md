@@ -1,49 +1,26 @@
-# Project 1.3 progress notes
+# Notes on Project 1.3
 
-Implemented (2026-09-08), done autonomously while Eddie is away — flagging
-anything worth a second look rather than blocking on it.
+Pulled Project 1.2's work into this repo first (EventsMap, EventDetails,
+the Event type) since the app keeps building on itself project to
+project.
 
-## What was built
+The two rubric criteria here are consume data and collect data, so:
 
-- Carried forward Project 1.2's completed work into this repo first
-  (`EventsMap.tsx`, `EventDetails.tsx`, `Event.ts`, the `EventDetails` route)
-  since this app builds incrementally project-to-project.
-- `src/services/api.ts`: added `getEvents`, `getEventDetails` (same as 1.2)
-  plus `createEvent` — POSTs a new event to `/events`.
-- `src/pages/EventsMap.tsx`: `loadEvents` now goes through
-  `getFromNetworkFirst` (already-existing utility in `caching.ts`, unused
-  until now) instead of a plain fetch — satisfies the **"Consume data"**
-  rubric criterion directly (fetch from internet → save in cache → fall
-  back to cache on failure). Also wired the "+" button to navigate to the
-  new `CreateEvent` screen.
-- `src/pages/CreateEvent.tsx`: new screen — satisfies the **"Collect
-  data"** rubric criterion:
-  - Form fields: name, description, volunteers needed, date/time (via
-    `@react-native-community/datetimepicker`, already a dependency).
-  - **Sensor**: "Use current location" button calls
-    `expo-location`'s `getCurrentPositionAsync` (after requesting
-    permission) to set the event's map position — this is the literal
-    "read the sensor (e.g. GPS...)" performance criterion.
-  - Optional image: `expo-image-picker` to pick a photo, uploaded via the
-    existing `imageApi.uploadImage` service before the event is created.
-  - On submit: posts the collected data to `/events` — "send data to
-    internet".
-- Registered `CreateEvent` in `AppStack.tsx`.
+Consume data: `loadEvents` now goes through `getFromNetworkFirst`, which
+was already sitting unused in caching.ts. Fetches from the API, saves to
+cache, falls back to cache if the request fails.
 
-## Scope note
+Collect data: built the CreateEvent screen. Name/description/volunteer
+count/date-time as normal form fields, then "Use current location" reads
+the GPS position via expo-location after asking permission, and there's
+an optional photo picker that uploads through the existing imageApi
+service before the event gets posted. Wired the "+" button on the map to
+open it.
 
-Did not touch the "apply to volunteer" flow (still a stub from Project
-1.2) — that's not what either of this project's rubric criteria
-(Consume data / Collect data) ask for; the create-event workflow is.
+Left the volunteer-application stub from 1.2 alone since that's not what
+either criterion here is asking for.
 
-## Verification status
-
-- `npx tsc --noEmit` passes clean, no type errors.
-- `yarn install` succeeds (same peer-dep warnings as 1.2, expected).
-- **Not verified on an actual device/emulator** — same limitation as
-  Project 1.2 (no Android/iOS emulator or physical device in this
-  environment, and no `json-server` was running to exercise the network
-  calls end-to-end). Reviewed by reading the code path carefully instead.
-  Location and image-picker permission prompts in particular can only be
-  verified on a real device/emulator — worth an actual run-through before
-  submitting.
+Type-checks clean, installs fine. Same story as 1.2 though, no phone or
+emulator to actually run this on, and no json-server running to hit the
+real endpoints, so the location/photo permission prompts specifically
+haven't been tested for real. Worth doing before this gets submitted.

@@ -18,12 +18,12 @@ not a final submission.**
 
 | Project | Status | Notes |
 |---|---|---|
-| 1.1 | Done | Branches merged, PR reviewed by Eddie with his own writeup on the branch differences and what he learned, then merged into `main` on 2026-09-12. [eddie7ch/MobileAppDevelopmentAssessments#1](https://github.com/eddie7ch/MobileAppDevelopmentAssessments/pull/1). Just needs the link submitted to D2L. |
-| 1.2 | Implemented | Event Details screen, real event fetching, state-colored map markers. |
-| 1.3 | Implemented | Create Event form + GPS location + optional photo upload; event fetching switched to network-first caching. |
-| 2 | Implemented, PR merged | Found and fixed the seeded "invalid email" bug (2-letter TLDs rejected) with a failing-test-first workflow. [PR #1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/1) merged into master 2026-09-12. |
-| 3 | Implemented | JSDoc across utils/services/components, per-screen responsibility docs, full project README rewrite. |
-| 4 | Implemented & verified | Release-triggered GitHub Actions workflow; actually published two releases to trigger it for real — [v1.0.0](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.0.0) failed on a permissions issue (found and fixed), [v1.0.1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.0.1) fully green with the build zip attached. |
+| 1.1 | Done | Merged. [MobileAppDevelopmentAssessments#1](https://github.com/eddie7ch/MobileAppDevelopmentAssessments/pull/1), with line comments in Files changed for step 5. Needs submitting on D2L (due Sep 17). |
+| 1.2 | Done, phone-tested | Event Details rebuilt to the Figma frames. [#2](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/2) then [#5](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/5), both merged. |
+| 1.3 | Done, phone-tested | Create Event, GPS, Cloudinary photos, volunteering. [#3](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/3) merged. Add Event layout still doesn't match Figma (map-pin step, split date/time, picture box). |
+| 2 | Done, phone-tested | Email TLD bug. [#1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/1) merged. |
+| 3 | Done, phone-tested | Docs + README updated for SDK 57. [#4](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/4) merged. |
+| 4 | Done | [v1.1.0](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.1.0) built green on Node 20, `volunteam-v1.1.0.zip` attached. |
 
 Common caveat across 1.2-1.4: none of this was run in Expo Go or an
 emulator (none available in this environment) — `npx tsc --noEmit` and

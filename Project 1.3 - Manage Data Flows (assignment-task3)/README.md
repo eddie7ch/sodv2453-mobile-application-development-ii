@@ -20,19 +20,19 @@ To use `my-json-server`, make sure your `db.json` is located at the repo root.
 
 ## Setting up the image upload API
 
-Update the file `src/services/imageApi.ts`.
+Event photos are uploaded to [Cloudinary](https://cloudinary.com/) from
+`src/services/imageApi.ts`. (The starter used ImgBB, but it blocked new
+accounts, so this project switched.)
 
-You can use any hosting service of your preference. In this case, we will use ImgBB API: https://api.imgbb.com/.
-Sign up for free at https://imgbb.com/signup, get your API key and add it to the .env file in your root folder.
-
-To run the app in your local environment, you will need to set the IMGBB_API_KEY when starting the app using:
-
-```
-IMGBB_API_KEY="insert_your_api_key_here" npx expo start
-```
-
-When creating your app build or publishing, import your secret values to EAS running:
+1. Create a free Cloudinary account.
+2. Under Settings > Upload, add an upload preset with Signing mode set to
+   **Unsigned**.
+3. Copy `.env.example` to `.env` and fill in your cloud name and preset name:
 
 ```
-eas secret:push
+EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
+EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your_unsigned_upload_preset
 ```
+
+`.env` is gitignored. An unsigned preset means no secret key is needed in the
+app. Restart `npx expo start` after changing `.env`.

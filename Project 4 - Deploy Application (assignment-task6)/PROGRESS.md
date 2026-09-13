@@ -24,3 +24,76 @@ rather than deleting it, it's a real record of what broke and got fixed.
 
 Submission-wise: build download and release page are both the same link,
 the v1.0.1 release on GitHub.
+
+## SDK 47 to 57 upgrade
+
+Expo Go stopped supporting SDK 47 entirely (just got "Failed to download
+remote update" with no way around it), so I bumped this project to SDK 57.
+Ran `npx expo install expo@^57.0.0` then `npx expo install --fix` to pull
+every Expo-managed package up to a matching version.
+
+Stuff that broke and had to get fixed after that:
+
+- `expo install --fix` can't write to `app.config.ts` on its own since it's
+  a TS file, so I added the plugins it asked for
+  (`@react-native-community/datetimepicker`, `expo-font`, `expo-status-bar`)
+  to the `plugins` array by hand.
+- `expo-doctor` flagged `@types/react-native` as a package that shouldn't be
+  installed directly anymore (types ship with `react-native` itself now), so
+  I removed it. Also had to add `react-native-worklets` since
+  `react-native-reanimated` 4 needs it as a peer dependency now, and bump
+  `@types/react`, `@types/react-dom`, `typescript`, `jest-expo`, and
+  `@types/jest` to the versions SDK 57 actually expects.
+- `tsconfig.json` had `"moduleResolution": "node"` hardcoded, which fights
+  with the `"moduleResolution": "bundler"` that `expo/tsconfig.base` wants
+  now. Removed the override so it just inherits from the base config.
+- The old top-level `splash: {...}` block in `app.config.ts` isn't valid on
+  the config type anymore. Moved it into an `expo-splash-screen` plugin
+  entry instead (same image, resize mode, and background color as before).
+- `expo-status-bar`'s `<StatusBar>` dropped the `translucent` prop, so I
+  pulled it out of the two places that used it (`App.tsx` and
+  `Login.tsx`).
+- `StyleSheet.absoluteFillObject` got renamed to `StyleSheet.absoluteFill`,
+  fixed the two spots using it in `EventsMap.tsx`.
+- `@expo/vector-icons` wasn't picked up automatically even though four files
+  import from it, had to install it explicitly.
+- tsc also needed `"types": ["jest"]` added to `tsconfig.json` for the test
+  file to see `describe`/`test`/`expect` again (this project didn't have an
+  explicit `types` array before, and without one the jest globals weren't
+  resolving under the new config).
+
+After all that, `expo-doctor` passes clean (21/21) and `npx tsc --noEmit`
+has zero errors. Also ran `npx expo export --platform android` into a temp
+folder by hand to make sure it still bundles the same way the release
+workflow builds it, and it does.
+
+### Release workflow
+
+`release.yml` needed one real change: it was pinned to Node 18, but
+`react-native` 0.86 (what SDK 57 pulls in) requires Node 20.19.4 or newer
+and will refuse to run on anything older. Bumped the workflow's
+`node-version` to 20. Didn't touch anything else in the workflow, the rest
+of it (the export/zip/release-attach steps) doesn't care about the SDK
+version.
+
+One thing I couldn't fix and want to flag: `yarn test` (the "Run tests"
+step in the workflow) is currently broken on SDK 57, and it's not this
+project's code, it's a bug in `jest-expo` itself. When a test file pulls in
+almost any Expo native module (I hit it first through `expo`'s fetch
+polyfill, then again through `expo-constants`), jest-expo tries to
+auto-mock it by grabbing the calling file's path out of a stack trace and
+walking up folders to find its `package.json`. The stack-trace parsing
+library it uses gets confused by this project's own folder name having
+parentheses in it ("Project 4 - Deploy Application (assignment-task6)")
+and silently strips them out of the path, so the walk-up looks in a folder
+that doesn't exist and jest-expo crashes with "TypeError: The path argument
+must be of type string. Received null" before any test even runs. I
+confirmed this by tracing exactly where the path gets mangled. I tried
+mapping the specific native modules to manual stubs to dodge it, but it
+just hits the same bug on the next native module a test happens to touch,
+so it's not something a couple of jest config tweaks can paper over. The
+real fix would be a folder name without parentheses, which isn't something
+I wanted to change unilaterally since it's the assignment folder itself.
+Since GitHub Actions checks out to a path that will still contain the same
+folder name, the "Run tests" step in the workflow will very likely fail the
+same way in CI until this gets sorted out.

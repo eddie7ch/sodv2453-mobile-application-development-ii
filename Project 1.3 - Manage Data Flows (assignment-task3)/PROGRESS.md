@@ -115,6 +115,10 @@ Tested the whole flow on my phone: empty form with Save disabled, taking a
 photo, choosing one from the library, removing it, then saving and seeing
 the new pin on the map.
 
+Also tested the offline fallback for real: loaded the map so the events got
+cached, stopped json-server, then opened an event and came back. The API call
+failed but the map still showed all 3 events from the cache.
+
 ## Data flows, and what I'd improve
 
 Loading events: the map asks the API first. If that works the response is

@@ -1,0 +1,192 @@
+name: Release build (volunteam)
+
+# Runs when a release is published on GitHub. Tests go first, and the Android and
+# iOS builds only start if every test passes. The finished binaries are attached
+# to the release so the deployment team can download them from the release page.
+#
+# This repo holds every course project, and GitHub only reads workflows from the
+# root .github folder, so each step changes into the Project 4 folder.
+#
+# "Run workflow" (workflow_dispatch) is there to try a build without publishing a
+# release. Those runs keep the files as workflow artifacts instead.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to upload files to the release
+
+env:
+  APP_DIR: "Project 4 - Deploy Application (assignment-task6)"
+  NODE_VERSION: 20
+
+defaults:
+  run:
+    shell: bash
+    working-directory: "Project 4 - Deploy Application (assignment-task6)"
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: ${{ env.APP_DIR }}/yarn.lock
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Unit tests
+        run: yarn test --ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+  android:
+    name: Build Android (APK and AAB)
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: ${{ env.APP_DIR }}/yarn.lock
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # The project folder's name has spaces and brackets, which some native build
+      # scripts can't handle, so the native build runs from a copy at a plain path.
+      - name: Copy the app to a path without spaces
+        run: |
+          mkdir -p "$HOME/volunteam"
+          cp -R . "$HOME/volunteam"
+          echo "BUILD_DIR=$HOME/volunteam" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        working-directory: ${{ env.BUILD_DIR }}
+        run: yarn install --frozen-lockfile
+
+      - name: Generate the native Android project
+        working-directory: ${{ env.BUILD_DIR }}
+        run: npx expo prebuild --platform android --no-install
+        env:
+          GOOGLE_MAPS_API_KEY_ANDROID: ${{ secrets.GOOGLE_MAPS_API_KEY_ANDROID }}
+
+      - name: Build release APK and AAB
+        working-directory: ${{ env.BUILD_DIR }}/android
+        # Only arm64 is compiled. Every current Android phone uses it, and building all
+        # four CPU types took well over an hour on GitHub's free runners.
+        # Lint is skipped here because the tests job already checks the code, and Gradle
+        # gets more memory since the default 2 GB made it crawl on the runner.
+        run: |
+          ./gradlew assembleRelease bundleRelease --no-daemon --console=plain \
+            "-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" \
+            -PreactNativeArchitectures=arm64-v8a \
+            -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease
+
+      - name: Collect binaries
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk out/volunteam-android.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab out/volunteam-android.aab
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: ${{ env.BUILD_DIR }}/out/*
+          if-no-files-found: error
+
+  ios:
+    name: Build iOS (simulator app)
+    needs: test
+    runs-on: macos-26
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: yarn
+          cache-dependency-path: ${{ env.APP_DIR }}/yarn.lock
+
+      # The project folder's name has spaces and brackets, which some native build
+      # scripts can't handle, so the native build runs from a copy at a plain path.
+      - name: Copy the app to a path without spaces
+        run: |
+          mkdir -p "$HOME/volunteam"
+          cp -R . "$HOME/volunteam"
+          echo "BUILD_DIR=$HOME/volunteam" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        working-directory: ${{ env.BUILD_DIR }}
+        run: yarn install --frozen-lockfile
+
+      - name: Generate the native iOS project
+        working-directory: ${{ env.BUILD_DIR }}
+        run: npx expo prebuild --platform ios
+
+      # Signing for the App Store needs the team's Apple Developer account, which the
+      # deployment team owns. This builds an unsigned Release app instead, which runs in
+      # the iOS Simulator and can be signed later.
+      - name: Build release app
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          xcodebuild -version
+          workspace=$(ls -d ios/*.xcworkspace)
+          scheme=$(basename "$workspace" .xcworkspace)
+          xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
+            -sdk iphonesimulator -derivedDataPath ios/build \
+            CODE_SIGNING_ALLOWED=NO > xcodebuild.log 2>&1 || {
+            grep -n -B2 -A12 "xcodebuild: error\|error:" xcodebuild.log | head -n 120
+            tail -n 80 xcodebuild.log
+            exit 1
+          }
+
+      - name: Collect binaries
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          mkdir -p out
+          cd ios/build/Build/Products/Release-iphonesimulator
+          zip -qry "$BUILD_DIR/out/volunteam-ios-simulator.zip" *.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios
+          path: ${{ env.BUILD_DIR }}/out/*
+          if-no-files-found: error
+
+  release:
+    name: Attach binaries to the release
+    needs: [android, ios]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: binaries
+          merge-multiple: true
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" binaries/* --repo "${{ github.repository }}" --clobber

@@ -1,7 +1,7 @@
 import { validateEmail } from './index';
 
 describe('validateEmail', () => {
-    // Bug report (QA, Ray): some users can't log in — entering their email
+    // Bug report (QA, Ray): some users can't log in. Entering their email
     // returns "invalid email" even though the address is a real one.
     // Reproduced with two of the seeded users from db.json: Luigi
     // (luigi@carluccio.it) and John (john@silva.com.br). Root cause: the

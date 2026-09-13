@@ -16,20 +16,11 @@ import * as api from '../services/api';
 import { getFromCache, getFromNetworkFirst } from '../services/caching';
 import { Event } from '../types/Event';
 
-/**
- * The app's home screen once logged in: a full-screen map of upcoming
- * volunteer events near the user, plus a footer showing how many were
- * found and a button to create a new one.
- *
- * Responsibilities:
- * - Loads events from the API (network-first, falling back to cache) and
- *   filters out any whose `dateTime` has already passed.
- * - Re-fits the map's viewport to the event pins whenever the list changes.
- * - Colors each marker by the event's state (grey = full, blue = the
- *   logged-in user's own event, default = open event by someone else).
- * - Navigates to `EventDetails` on marker press, `CreateEvent` on the "+"
- *   button, and `Login` (clearing the cached session) on logout.
- */
+// Home screen once logged in. Loads upcoming events (network-first, past
+// ones filtered out), fits the map to whatever's left, and colors each
+// marker by state - grey if it's full, blue if it's yours, default
+// otherwise. Marker tap goes to EventDetails, the "+" button to
+// CreateEvent, and logout clears the cached session back to Login.
 export default function EventsMap(props: StackScreenProps<any>) {
     const { navigation } = props;
     const authenticationContext = useContext(AuthenticationContext);

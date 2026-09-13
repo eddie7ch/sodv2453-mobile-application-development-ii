@@ -14,51 +14,30 @@ const api = axios.create({
     baseURL: 'http://0.0.0.0:3333',
 });
 
-/**
- * Logs a user in against the fake API's `/login` route (provided by
- * `json-server-auth`).
- *
- * @param email - The user's email address (should already be sanitized/lowercased
- *   by the caller — see `sanitizeEmail`).
- * @param password - The user's plaintext password; the server compares it against
- *   the bcrypt hash stored in `db.json`.
- * @returns The Axios response. On success, `response.data` is
- *   `{ accessToken: string; user: User }`.
- */
+// hits json-server-auth's /login route. On success response.data is
+// { accessToken, user }.
 export const authenticateUser = (email: string, password: string): Promise<AxiosResponse> => {
     return api.post(`/login`, { email, password });
 };
 
-/**
- * Fetches every event from the API (no filtering server-side — callers are
- * responsible for e.g. excluding past events).
- *
- * @param accessToken - The bearer token returned by `authenticateUser`, required
- *   because `/events` is a protected route under `json-server-auth`.
- * @returns The Axios response; `response.data` is an array of `Event` objects.
- */
+// returns every event, unfiltered - it's on the caller to drop past ones etc.
+// needs a token since /events is a protected route.
 export const getEvents = (accessToken: string): Promise<AxiosResponse> => {
     return api.get(`/events`, {
         headers: { Authorization: `Bearer ${accessToken}` },
     });
 };
 
-/**
- * Fetches a single event by id — used to refresh an event's details with the
- * latest server data (e.g. after another user has volunteered).
- *
- * @param eventId - The event's `id` field.
- * @param accessToken - The bearer token returned by `authenticateUser`.
- * @returns The Axios response; `response.data` is a single `Event` object.
- */
+// re-fetches one event by id, mainly so EventDetails isn't stuck showing
+// whatever was passed through navigation if it's gone stale
 export const getEventDetails = (eventId: string, accessToken: string): Promise<AxiosResponse> => {
     return api.get(`/events/${eventId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
     });
 };
 
-/** The event fields a client provides when creating a new event — everything
- * except `id` (server-assigned) and `volunteersIds` (starts empty). */
+// everything the CreateEvent form + GPS location collect, minus id
+// (server-assigned) and volunteersIds (starts empty on a new event)
 export interface NewEventData {
     name: string;
     description: string;
@@ -69,16 +48,6 @@ export interface NewEventData {
     imageUrl?: string;
 }
 
-/**
- * Creates a new event on the server.
- *
- * @param event - The event's data, collected from the Create Event form plus
- *   the device's GPS location. `volunteersIds` is always sent empty — a brand
- *   new event has no volunteers yet.
- * @param accessToken - The bearer token returned by `authenticateUser`.
- * @returns The Axios response; `response.data` is the created `Event`
- *   (including the server-assigned `id`).
- */
 export const createEvent = (event: NewEventData, accessToken: string): Promise<AxiosResponse> => {
     return api.post(`/events`, { ...event, volunteersIds: [] }, {
         headers: { Authorization: `Bearer ${accessToken}` },

@@ -1,19 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-/**
- * Fetches fresh data over the network and caches it, falling back to
- * whatever is already cached if the network request fails (e.g. the device
- * is offline). This is the "consume data" pattern used by `EventsMap` to
- * load the events list: try the API first, but don't leave the user with a
- * blank screen just because the network hiccupped.
- *
- * @param key - The cache key to store/read the value under (also used as the
- *   `AsyncStorage` key — should be unique per kind of data, e.g. `"events"`).
- * @param request - An already-started request (e.g. `api.getEvents(token)`).
- * @returns The network response if it succeeded (and it's now cached); the
- *   cached value otherwise. Rejects if the network fails *and* there's
- *   nothing cached yet for `key`.
- */
+// Tries the network first, caches whatever comes back, and falls back to
+// the cache if the request fails (offline, timeout, whatever). This is
+// what EventsMap uses to load events - if the fetch fails there's still
+// a last-known list to show instead of a blank screen. Only rejects if
+// the network fails and there's nothing cached yet either.
 export const getFromNetworkFirst = async <T>(key: string, request: Promise<T>): Promise<T> => {
     try {
         const response = await request;
@@ -24,24 +15,12 @@ export const getFromNetworkFirst = async <T>(key: string, request: Promise<T>): 
     }
 };
 
-/**
- * Saves a value to `AsyncStorage` under `key`, JSON-serialized.
- *
- * @param key - The storage key.
- * @param value - Any JSON-serializable value.
- */
 export const setInCache = (key: string, value: any) => {
     const jsonValue = JSON.stringify(value);
     return AsyncStorage.setItem(key, jsonValue);
 };
 
-/**
- * Reads and JSON-parses a value previously saved with {@link setInCache}.
- *
- * @param key - The storage key.
- * @returns The parsed value.
- * @throws (rejects) if there's nothing cached under `key`.
- */
+// rejects if nothing's stored under that key
 export const getFromCache = async <T>(key: string): Promise<T> => {
     const json = await AsyncStorage.getItem(key);
     return await (json != null ? Promise.resolve(JSON.parse(json)) : Promise.reject(`Key "${key}" not in cache`));

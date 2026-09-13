@@ -62,6 +62,31 @@ LAN IP and moved three of the seeded events to future dates (they were
 John, and Ulla, and all three worked. Details are at the bottom of
 TEST_SCRIPT.md.
 
+## Second pass: a wider range of scenarios
+
+Went back over the brief and rubric. The first version only tested the one
+case from the ticket, and the rubric's top level asks for a wide range of
+scenarios in the unit tests, the manual testing and the debugging.
+
+Testing more addresses turned up more than the ticket said. The old check
+also rejected `.co`, `.ca`, `.info` and `.museum`, and a second cause: `+`
+and apostrophes weren't allowed before the @, so `bob+news@gmail.com` was
+rejected too. Fixed both, and removed a leftover `123;` line in Login.tsx.
+
+Unit tests went from 6 to 39. They cover all 10 seeded users, 9 other real
+address shapes, 11 invalid ones, and the login screen itself with the API,
+cache and navigation mocked. Ran them against the original code first: 16
+fail. With the fix, all 39 pass.
+
+Manual test script now has 8 scenarios, all run on my phone and passing.
+It also has a findings section, including one I tripped over myself: if you
+don't log out between tests, the app skips the login screen and it looks
+like a wrong password worked.
+
+Libraries added, both dev only so they don't end up in the app:
+`@testing-library/react-native` to render and tap the login screen in a
+test, and `test-renderer`, which it needs to run.
+
 ## What I learned
 
 Reproduce the bug before fixing it. I wrote the failing test first, so I
@@ -81,3 +106,11 @@ in as all three users on my phone to confirm the fix works in the real app.
 Tooling breaks in weird ways. The folder name having parentheses broke
 jest-expo after the SDK upgrade. I learned how to patch a dependency with
 patch-package so the fix sticks after every install.
+
+Mock what the screen depends on, not the screen. Faking the API, cache and
+navigation let me test the real login screen without json-server running.
+
+A test that passes can still be testing the wrong thing. When wrong
+passwords seemed to log me in, the server log showed they never even
+reached it. I was still logged in. Checking the evidence first saved me
+from "fixing" a bug that didn't exist.

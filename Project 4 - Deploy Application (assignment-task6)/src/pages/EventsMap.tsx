@@ -1,11 +1,12 @@
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import { useIsFocused } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { LatLng, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import customMapStyle from '../../map-style.json';
 import * as MapSettings from '../constants/MapSettings';
 import { AuthenticationContext } from '../context/AuthenticationContext';
@@ -15,21 +16,8 @@ import mapMarkerGreyImg from '../images/map-marker-grey.png';
 import * as api from '../services/api';
 import { getFromCache, getFromNetworkFirst } from '../services/caching';
 import { Event } from '../types/Event';
+import { getEventStatus } from '../utils';
 
-/**
- * The app's home screen once logged in: a full-screen map of upcoming
- * volunteer events near the user, plus a footer showing how many were
- * found and a button to create a new one.
- *
- * Responsibilities:
- * - Loads events from the API (network-first, falling back to cache) and
- *   filters out any whose `dateTime` has already passed.
- * - Re-fits the map's viewport to the event pins whenever the list changes.
- * - Colors each marker by the event's state (grey = full, blue = the
- *   logged-in user's own event, default = open event by someone else).
- * - Navigates to `EventDetails` on marker press, `CreateEvent` on the "+"
- *   button, and `Login` (clearing the cached session) on logout.
- */
 export default function EventsMap(props: StackScreenProps<any>) {
     const { navigation } = props;
     const authenticationContext = useContext(AuthenticationContext);
@@ -37,28 +25,40 @@ export default function EventsMap(props: StackScreenProps<any>) {
     const isFocused = useIsFocused();
 
     const [events, setEvents] = useState<Event[]>([]);
+    const [userLocation, setUserLocation] = useState<LatLng>();
 
     useEffect(() => {
         if (isFocused) {
             loadEvents();
+            loadUserLocation();
         }
     }, [isFocused]);
 
     useEffect(() => {
-        if (events.length > 0) {
-            mapViewRef.current?.fitToCoordinates(
-                events.map(({ position }) => ({
-                    latitude: position.latitude,
-                    longitude: position.longitude,
-                })),
-                { edgePadding: MapSettings.EDGE_PADDING }
-            );
+        const coordinates: LatLng[] = events.map(({ position }) => ({
+            latitude: position.latitude,
+            longitude: position.longitude,
+        }));
+        if (userLocation) coordinates.push(userLocation);
+
+        if (coordinates.length > 0) {
+            mapViewRef.current?.fitToCoordinates(coordinates, { edgePadding: MapSettings.EDGE_PADDING });
         }
-    }, [events]);
+    }, [events, userLocation]);
+
+    const loadUserLocation = async () => {
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') return;
+            const { coords } = await Location.getCurrentPositionAsync({});
+            setUserLocation({ latitude: coords.latitude, longitude: coords.longitude });
+        } catch (error) {
+            // No location just means the map fits the events on their own
+            console.log(error);
+        }
+    };
 
     const loadEvents = () => {
-        // Consume data: fetch from the internet first, save the response in cache,
-        // and fall back to whatever is cached if the network request fails.
         getFromCache<string>('accessToken')
             .then((accessToken) => getFromNetworkFirst('events', api.getEvents(accessToken)))
             .then((response) => {
@@ -72,18 +72,16 @@ export default function EventsMap(props: StackScreenProps<any>) {
             .catch((error: any) => console.log(error));
     };
 
+    // Same rules as the status box on Event Details, so the pin colour always matches what the details screen says
     const getMarkerImage = (event: Event) => {
-        const isEventFull = event.volunteersIds.length >= event.volunteersNeeded;
-        if (isEventFull) return mapMarkerGreyImg;
-
-        const isOwnEvent = event.organizerId === authenticationContext?.value?.id;
-        if (isOwnEvent) return mapMarkerBlueImg;
-
+        const status = getEventStatus(event.volunteersIds, event.volunteersNeeded, authenticationContext?.value?.id);
+        if (status === 'volunteered') return mapMarkerBlueImg;
+        if (status === 'full') return mapMarkerGreyImg;
         return mapMarkerImg;
     };
 
     const handleNavigateToCreateEvent = () => {
-        navigation.navigate('CreateEvent');
+        navigation.navigate('SelectEventLocation');
     };
 
     const handleNavigateToEventDetails = (event: Event) => {
@@ -129,7 +127,7 @@ export default function EventsMap(props: StackScreenProps<any>) {
             </MapView>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>{events.length} event(s) found</Text>
+                <Text style={styles.footerText}>{events.length} {events.length === 1 ? 'event' : 'events'} found</Text>
                 <RectButton
                     style={[styles.smallButton, { backgroundColor: '#00A3FF' }]}
                     onPress={handleNavigateToCreateEvent}

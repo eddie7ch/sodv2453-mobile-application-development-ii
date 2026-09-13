@@ -58,3 +58,29 @@ still making progress, which pointed at resources rather than a hang.
 
 Try the pipeline before the real release. The manual trigger let me break and
 fix it privately instead of publishing a pile of failed releases.
+
+## Final cleanup (v1.2.1)
+
+While checking everything at the end I found Project 4 still had an old copy of
+the app. The screens from Projects 1.2 and 1.3 that I'd tested on my phone
+never made it in, so v1.2.0's notes promised a date picker fix the APK didn't
+have. I rebuilt this folder from those tested versions: 1.3's create event
+flow, location screen and Cloudinary photos, 1.2's event details screen and
+status colours, plus Project 2's email fix and tests.
+
+A review of the combined code turned up a few more bugs, which I fixed:
+
+- Auto-login could skip to the login form, because the saved user and token
+  were read separately and the map only opened if the token came back second.
+- A damaged saved token threw an error instead of just asking to log in again.
+- The map could open before the token was saved and show 0 events.
+- A login error sent back as JSON would crash the error pop-up.
+- The events cache saved the whole Axios response, including the request
+  object, instead of just the data.
+
+For v1.2.1 I also set the version number, pointed the app at my computer's IP,
+allowed plain http on Android so it can reach json-server, and gave the build
+the Cloudinary settings as repository variables.
+
+What I learned: copying work forward between folders by hand is how things get
+lost. A quick diff between the folders would have caught it much earlier.

@@ -4,7 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ...config,
     name: 'volunteam',
     slug: 'volunteam-4-deploy',
-    version: '1.0.0',
+    version: '1.2.1',
     orientation: 'portrait',
     icon: './assets/icon.png',
     updates: {
@@ -34,6 +34,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
                 cameraPermission: 'The app accesses your camera to let you add pictures to events.',
             },
         ],
+        // The app talks to json-server over plain http on the local network, which Android
+        // release builds block unless it's allowed here.
+        ['expo-build-properties', { android: { usesCleartextTraffic: true } }],
         '@react-native-community/datetimepicker',
         'expo-font',
         'expo-status-bar',

@@ -15,19 +15,6 @@ import { getFromCache, setInCache } from '../services/caching';
 import { User } from '../types/User';
 import { isTokenExpired, sanitizeEmail, validateEmail } from '../utils';
 
-/**
- * The email/password login form, and the app's entry screen.
- *
- * Responsibilities:
- * - On mount, checks for a cached user + access token and, if the token
- *   isn't expired, skips straight to `EventsMap` instead of showing the form.
- * - Validates email/password client-side (via `validateEmail`, a minimum
- *   password length) before calling the API, so obviously-invalid input
- *   never reaches the server.
- * - On success, caches the user and access token and navigates to
- *   `EventsMap`; on failure, surfaces the server's error message via an
- *   `Alert`.
- */
 export default function Login({ navigation }: StackScreenProps<any>) {
     const authenticationContext = useContext(AuthenticationContext);
     const [email, setEmail] = useState('');
@@ -40,41 +27,44 @@ export default function Login({ navigation }: StackScreenProps<any>) {
     const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
     const isFocused = useIsFocused();
 
+    // Restores a saved login. Both values are read together so the map only opens once the
+    // user and a still-valid token are both known.
     useEffect(() => {
-        getFromCache('userInfo').then(
-            (cachedUserInfo) => authenticationContext?.setValue(cachedUserInfo as User),
-            (error: any) => console.log(error)
-        );
-        getFromCache('accessToken').then(
-            (accessToken) => accessToken && !isTokenExpired(accessToken as string) && setAccessTokenIsValid(true),
-            (error: any) => console.log(error)
-        );
+        Promise.all([getFromCache<User>('userInfo'), getFromCache<string>('accessToken')])
+            .then(([cachedUserInfo, accessToken]) => {
+                if (!cachedUserInfo || !accessToken || isTokenExpired(accessToken)) return;
+                authenticationContext?.setValue(cachedUserInfo);
+                setAccessTokenIsValid(true);
+            })
+            .catch((error: any) => console.log(error));
+    }, []);
+
+    useEffect(() => {
         if (authError)
             Alert.alert('Authentication Error', authError, [{ text: 'Ok', onPress: () => setAuthError(undefined) }]);
     }, [authError]);
 
     useEffect(() => {
-        if (accessTokenIsValid && authenticationContext?.value) navigation.navigate('EventsMap');
+        if (accessTokenIsValid) navigation.navigate('EventsMap');
     }, [accessTokenIsValid]);
 
     const handleAuthentication = () => {
         if (formIsValid()) {
             setIsAuthenticating(true);
             api.authenticateUser(sanitizeEmail(email), password)
-                .then((response) => {
-                    setInCache('userInfo', response.data.user);
-                    setInCache('accessToken', response.data.accessToken);
+                .then(async (response) => {
+                    // Saved before navigating, because the map reads the token straight away
+                    await Promise.all([
+                        setInCache('userInfo', response.data.user),
+                        setInCache('accessToken', response.data.accessToken),
+                    ]);
                     authenticationContext?.setValue(response.data.user);
                     setIsAuthenticating(false);
-                    123;
                     navigation.navigate('EventsMap');
                 })
                 .catch((error) => {
-                    if (error.response) {
-                        setAuthError(error.response.data);
-                    } else {
-                        setAuthError('Something went wrong.');
-                    }
+                    const data = error.response?.data;
+                    setAuthError(typeof data === 'string' ? data : data?.message ?? 'Something went wrong.');
                     setIsAuthenticating(false);
                 });
         }

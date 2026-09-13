@@ -91,6 +91,13 @@ yarn test
 Runs the Jest unit tests (`jest-expo` preset), currently covers
 `validateEmail` in `src/utils/index.ts`.
 
+## Event photos (Cloudinary)
+
+Photos are uploaded to Cloudinary. Copy `.env.example` to `.env` and fill in
+your cloud name and an unsigned upload preset. For release builds, add the same
+two values as repository variables (Settings, Secrets and variables, Actions,
+Variables tab).
+
 ## Releasing a new version
 
 Publishing a release on GitHub builds the app automatically

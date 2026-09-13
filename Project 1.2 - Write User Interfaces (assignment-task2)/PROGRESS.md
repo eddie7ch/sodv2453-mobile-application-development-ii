@@ -46,6 +46,37 @@ markers show up on the map with the right colors (grey for full events,
 orange for open ones that aren't mine), and tapping a marker opens Event
 Details with the correct image, date, description, and volunteer count.
 
+## Second pass: matching the actual brief and the Figma design
+
+The first version was built from the rubric alone, before I had the full
+assignment text. Once I read the brief properly it was clear the Event
+Details screen was missing most of what was asked for, so I went back.
+
+What changed:
+
+- The map now fits my current location as well as the events, every time
+  the screen comes back into focus, not just the events on first load.
+- The status box on Event Details has three states, worked out by one
+  helper (`getEventStatus` in utils): "Volunteered" if I've applied,
+  "X of Y" volunteers if the event is open, "Team is full" if it's full.
+  The box itself is its own component, `EventStatusBox`.
+- Call and Text only show once I've volunteered, and they open the dialer
+  and messages with the organizer's real number (fetched from /users).
+- Volunteer only shows when the event isn't full and I haven't applied,
+  and it actually saves me as a volunteer now.
+- Share shows for open events and ones I've volunteered for.
+- Added the map preview and a "Get Directions to Event" button that opens
+  the phone's maps app.
+
+For the design I made a copy of the course Figma file into my drafts so I
+could read the exact values off the three Event frames (open, volunteered,
+full): colours, font sizes, box heights, spacing. The screen follows those
+now instead of my guesses.
+
+Tested all three states on my phone as Yasemin, whose account happens to
+cover each one, and tried every button: Call, Text, Share, Volunteer and
+Get Directions all work.
+
 ## What I learned
 
 Type-checking clean doesn't mean the app works. Everything compiled fine,
@@ -65,3 +96,8 @@ already had the right command.
 
 Seed data goes stale. Every sample event was dated 2022 or 2023, so the map
 filtered them all out and looked broken. The filter was doing its job.
+
+Read the whole brief, not just the rubric. The rubric only listed general
+skills like "manage state", so my first version technically hit those but
+missed the actual screen the assignment described. Going back to the brief
+and the Figma frames is what showed me what "done" really meant here.

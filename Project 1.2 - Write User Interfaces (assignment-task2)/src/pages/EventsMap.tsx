@@ -1,11 +1,12 @@
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import { useIsFocused } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { LatLng, Marker } from 'react-native-maps';
 import customMapStyle from '../../map-style.json';
 import * as MapSettings from '../constants/MapSettings';
 import { AuthenticationContext } from '../context/AuthenticationContext';
@@ -23,24 +24,38 @@ export default function EventsMap(props: StackScreenProps<any>) {
     const isFocused = useIsFocused();
 
     const [events, setEvents] = useState<Event[]>([]);
+    const [userLocation, setUserLocation] = useState<LatLng>();
 
     useEffect(() => {
         if (isFocused) {
             loadEvents();
+            loadUserLocation();
         }
     }, [isFocused]);
 
     useEffect(() => {
-        if (events.length > 0) {
-            mapViewRef.current?.fitToCoordinates(
-                events.map(({ position }) => ({
-                    latitude: position.latitude,
-                    longitude: position.longitude,
-                })),
-                { edgePadding: MapSettings.EDGE_PADDING }
-            );
+        const coordinates: LatLng[] = events.map(({ position }) => ({
+            latitude: position.latitude,
+            longitude: position.longitude,
+        }));
+        if (userLocation) coordinates.push(userLocation);
+
+        if (coordinates.length > 0) {
+            mapViewRef.current?.fitToCoordinates(coordinates, { edgePadding: MapSettings.EDGE_PADDING });
         }
-    }, [events]);
+    }, [events, userLocation]);
+
+    const loadUserLocation = async () => {
+        try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') return;
+            const { coords } = await Location.getCurrentPositionAsync({});
+            setUserLocation({ latitude: coords.latitude, longitude: coords.longitude });
+        } catch (error) {
+            // No location just means the map fits the events on their own
+            console.log(error);
+        }
+    };
 
     const loadEvents = () => {
         getFromCache<string>('accessToken')

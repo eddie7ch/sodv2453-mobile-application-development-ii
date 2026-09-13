@@ -29,3 +29,19 @@ export const getEventDetails = (eventId: string, accessToken: string): Promise<A
         headers: { Authorization: `Bearer ${accessToken}` },
     });
 };
+
+export const getUser = (userId: string, accessToken: string): Promise<AxiosResponse> => {
+    return api.get(`/users/${userId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+};
+
+export const applyToVolunteer = (
+    eventId: string,
+    volunteersIds: string[],
+    accessToken: string
+): Promise<AxiosResponse> => {
+    return api.patch(`/events/${eventId}`, { volunteersIds }, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+};

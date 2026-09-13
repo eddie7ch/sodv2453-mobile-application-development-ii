@@ -19,8 +19,8 @@ not a final submission.**
 | Project | Status | Notes |
 |---|---|---|
 | 1.1 | Done | Merged. [MobileAppDevelopmentAssessments#1](https://github.com/eddie7ch/MobileAppDevelopmentAssessments/pull/1), with line comments in Files changed for step 5 and lessons learned for all 3 rubric rows. Needs submitting on D2L (due Sep 17). |
-| 1.2 | Done, phone-tested | Event Details rebuilt to the Figma frames. [#2](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/2) then [#5](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/5) and [#6](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/6) (routes, + button, footer), all merged. Checked line by line against the brief. Submit #5 and #6. |
-| 1.3 | Done, phone-tested | Create Event, GPS, Cloudinary photos, volunteering. [#3](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/3) merged. Add Event layout still doesn't match Figma (map-pin step, split date/time, picture box). |
+| 1.2 | Done, phone-tested | Event Details rebuilt to the Figma frames. One clean PR: [#7](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/7), merged. Checked line by line against the brief and task diagram. Submit #7. |
+| 1.3 | Done, phone-tested | Two-step create event flow rebuilt to the brief and Figma, camera/library + upload with thumbnail, required fields, offline cache fallback tested. One clean PR: [#8](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/8), merged. Submit #8. |
 | 2 | Done, phone-tested | Email TLD bug. [#1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/1) merged. |
 | 3 | Done, phone-tested | Docs + README updated for SDK 57. [#4](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/4) merged. |
 | 4 | Done | [v1.1.0](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/releases/tag/v1.1.0) built green on Node 20, `volunteam-v1.1.0.zip` attached. |

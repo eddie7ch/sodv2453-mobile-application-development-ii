@@ -84,3 +84,21 @@ the Cloudinary settings as repository variables.
 
 What I learned: copying work forward between folders by hand is how things get
 lost. A quick diff between the folders would have caught it much earlier.
+
+## Production hardening (v1.2.2)
+
+Two things were fine for school but not for a real app:
+
+- **Maps key.** Release builds were signed with React Native's public debug
+  key, so anyone could sign their own app with it and use my Maps key. I made
+  my own upload key, stored it and its password as repository secrets, and the
+  workflow now signs Android builds with it. The Maps key only accepts that
+  certificate now.
+- **Photo uploads.** The Cloudinary preset has to be unsigned for a mobile app
+  with no backend, so I limited it instead: images only, uploads go into one
+  folder, and large photos get resized when they arrive. Fully locking it down
+  would need a small server that signs each upload.
+
+What I learned: a password prompt that shows nothing can still save an empty
+value. The build log showed the password secret was blank, which saved me from
+guessing at the signing code.

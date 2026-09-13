@@ -53,7 +53,6 @@ export default function Login({ navigation }: StackScreenProps<any>) {
                     setInCache('accessToken', response.data.accessToken);
                     authenticationContext?.setValue(response.data.user);
                     setIsAuthenticating(false);
-                    123;
                     navigation.navigate('EventsMap');
                 })
                 .catch((error) => {
@@ -92,7 +91,7 @@ export default function Login({ navigation }: StackScreenProps<any>) {
             colors={['#031A62', '#00A3FF']}
             style={styles.gradientContainer}
         >
-            {isFocused && <StatusBar animated translucent style="light" />}
+            {isFocused && <StatusBar animated style="light" />}
             <KeyboardAwareScrollView
                 style={styles.container}
                 contentContainerStyle={{
@@ -117,6 +116,7 @@ export default function Login({ navigation }: StackScreenProps<any>) {
                     {emailIsInvalid && <Text style={styles.error}>invalid email</Text>}
                 </View>
                 <TextInput
+                    testID="email-input"
                     style={[styles.input, emailIsInvalid && styles.invalid]}
                     onChangeText={(value) => setEmail(value)}
                     onEndEditing={isEmailInvalid}
@@ -127,6 +127,7 @@ export default function Login({ navigation }: StackScreenProps<any>) {
                     {passwordIsInvalid && <Text style={styles.error}>invalid password</Text>}
                 </View>
                 <TextInput
+                    testID="password-input"
                     style={[styles.input, passwordIsInvalid && styles.invalid]}
                     secureTextEntry={true}
                     onChangeText={(value) => setPassword(value)}

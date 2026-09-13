@@ -77,6 +77,29 @@ Tested all three states on my phone as Yasemin, whose account happens to
 cover each one, and tried every button: Call, Text, Share, Volunteer and
 Get Directions all work.
 
+## Libraries I added and why
+
+The brief allows third party libraries as long as I can justify them. I only
+added what the SDK 57 upgrade or the screen actually needed:
+
+- `@expo/vector-icons`: the icons on the buttons and status boxes (share,
+  phone, calendar, check). It's Expo's own icon set and was already being
+  imported by the starter, it just wasn't listed in package.json.
+- `expo-splash-screen`: SDK 57 moved the splash screen config into this
+  plugin, so the old `splash` setting stopped working without it.
+- `react-native-worklets`: required by `react-native-reanimated` 4, which
+  the SDK upgrade pulled in. Nothing in my code uses it directly.
+- `expo-dev-client`: only for running the app on my phone with the Google
+  map working. Expo Go couldn't render the map tiles on SDK 57.
+- `@types/node` (dev only): type definitions so `app.config.ts` can read
+  environment variables. Never ends up in the app.
+
+On bundle size: the icons, splash screen and worklets are small and are
+things the app needs anyway. `expo-dev-client` and `@types/node` aren't part
+of the app a user would install from a store, so they don't add to it.
+Call, Text, Share and Get Directions use React Native's built in `Linking`
+and `Share` instead of extra packages.
+
 ## What I learned
 
 Type-checking clean doesn't mean the app works. Everything compiled fine,

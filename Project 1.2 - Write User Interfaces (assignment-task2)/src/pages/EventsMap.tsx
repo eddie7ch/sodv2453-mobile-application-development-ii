@@ -16,6 +16,7 @@ import mapMarkerGreyImg from '../images/map-marker-grey.png';
 import * as api from '../services/api';
 import { getFromCache } from '../services/caching';
 import { Event } from '../types/Event';
+import { getEventStatus } from '../utils';
 
 export default function EventsMap(props: StackScreenProps<any>) {
     const { navigation } = props;
@@ -71,13 +72,11 @@ export default function EventsMap(props: StackScreenProps<any>) {
             .catch((error: any) => console.log(error));
     };
 
+    // Same rules as the status box on Event Details, so the pin colour always matches what the details screen says
     const getMarkerImage = (event: Event) => {
-        const isEventFull = event.volunteersIds.length >= event.volunteersNeeded;
-        if (isEventFull) return mapMarkerGreyImg;
-
-        const isOwnEvent = event.organizerId === authenticationContext?.value?.id;
-        if (isOwnEvent) return mapMarkerBlueImg;
-
+        const status = getEventStatus(event.volunteersIds, event.volunteersNeeded, authenticationContext?.value?.id);
+        if (status === 'volunteered') return mapMarkerBlueImg;
+        if (status === 'full') return mapMarkerGreyImg;
         return mapMarkerImg;
     };
 

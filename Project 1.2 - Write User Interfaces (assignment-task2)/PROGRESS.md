@@ -8,9 +8,10 @@ Past events get filtered out (dateTime < now). One of the sample events
 even has "Past events should not be displayed in the map" as its literal
 description, which is a decent hint that's what they wanted tested.
 
-Markers now change color based on state: grey if the event's full, blue
-if it's mine, otherwise the default orange. Footer count is real now
-instead of the old placeholder "X event(s) found".
+Markers now change color based on state: blue if I've volunteered, grey
+if the event's full, otherwise orange. (I first had blue meaning events I
+organized, until the task diagram showed blue leads to the "Volunteered"
+screen.) Footer count is real now instead of the old placeholder.
 
 Built the EventDetails screen: image, name, date/time, description,
 remaining volunteer slots. It re-fetches the event by id on mount instead

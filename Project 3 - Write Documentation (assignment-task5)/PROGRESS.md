@@ -50,6 +50,9 @@ expo-doctor passes 21/21, tsc --noEmit is clean, and `expo export` bundles
 fine for Android. Didn't touch any of the doc comments beyond what these
 fixes needed.
 
+Checked it on my phone after the upgrade by following the README exactly:
+logged in as Ulla and the map showed all three upcoming events.
+
 ## What I learned
 
 Documentation goes out of date the moment the code changes. After the SDK

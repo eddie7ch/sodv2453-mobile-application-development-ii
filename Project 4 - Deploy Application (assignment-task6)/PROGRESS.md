@@ -1,117 +1,60 @@
 # Notes on Project 4
 
-Pulled in Project 3's work first, then built the actual deployment piece:
-a workflow that fires when a GitHub Release gets published. It installs
-deps, runs tests, type-checks, builds the app with `npx expo export` for
-both Android and iOS (no EAS account needed, so it runs standalone in CI),
-zips the output, and attaches it to the release.
+Jeremy's ticket: when a release is published on GitHub, run the unit tests and,
+if they all pass, build the binary files the deployment team needs for the App
+Store and Google Play. Then send the download link and the release page.
 
-One thing worth knowing if this workflow ever seems to not run: the file
-has to live at the repo root (`.github/workflows/release.yml`), not
-inside this project's own folder, since GitHub Actions only looks at the
-real repo root and this whole thing is one monorepo. Every step scopes
-into this folder with `working-directory` instead.
+## The workflow
 
-Ran `expo export` by hand for both platforms before trusting it in the
-workflow, both worked and produced a real dist folder. Then actually
-published a release to see if the whole thing worked end to end. First
-try (v1.0.0) failed on the last step, attaching the zip, with "Resource
-not accessible by integration". Turned out the default GITHUB_TOKEN is
-read-only unless you ask for write access explicitly. Added
-`permissions: contents: write`, published v1.0.1, and that one went fully
-green with the zip actually attached. Left v1.0.0's failed run alone
-rather than deleting it, it's a real record of what broke and got fixed.
+`.github/workflows/release.yml` (at the repo root, since GitHub only reads
+workflows from there and this repo holds every project).
 
-Submission-wise: build download and release page are both the same link,
-the v1.0.1 release on GitHub.
+1. **Run unit tests:** installs dependencies, runs the 33 Jest tests and the
+   TypeScript check. The build jobs depend on this one, so a failing test
+   stops everything.
+2. **Build Android:** generates the native project with `expo prebuild` and
+   builds a release APK (installs on a phone) and AAB (what Google Play takes)
+   with Gradle.
+3. **Build iOS:** generates the native project and builds a Release app with
+   `xcodebuild` for the iOS Simulator. Signing for the App Store needs the
+   Apple Developer account, which the deployment team owns, so it's unsigned.
+4. **Attach binaries to the release:** uploads all three files to the release
+   page under Assets.
 
-## SDK 47 to 57 upgrade
+Android and iOS build at the same time. There's also a "Run workflow" button
+to try a build without publishing a release.
 
-Expo Go stopped supporting SDK 47 entirely (just got "Failed to download
-remote update" with no way around it), so I bumped this project to SDK 57.
-Ran `npx expo install expo@^57.0.0` then `npx expo install --fix` to pull
-every Expo-managed package up to a matching version.
+The tests are Project 2's email validation suite, along with its final fix.
 
-Stuff that broke and had to get fixed after that:
+## Troubleshooting
 
-- `expo install --fix` can't write to `app.config.ts` on its own since it's
-  a TS file, so I added the plugins it asked for
-  (`@react-native-community/datetimepicker`, `expo-font`, `expo-status-bar`)
-  to the `plugins` array by hand.
-- `expo-doctor` flagged `@types/react-native` as a package that shouldn't be
-  installed directly anymore (types ship with `react-native` itself now), so
-  I removed it. Also had to add `react-native-worklets` since
-  `react-native-reanimated` 4 needs it as a peer dependency now, and bump
-  `@types/react`, `@types/react-dom`, `typescript`, `jest-expo`, and
-  `@types/jest` to the versions SDK 57 actually expects.
-- `tsconfig.json` had `"moduleResolution": "node"` hardcoded, which fights
-  with the `"moduleResolution": "bundler"` that `expo/tsconfig.base` wants
-  now. Removed the override so it just inherits from the base config.
-- The old top-level `splash: {...}` block in `app.config.ts` isn't valid on
-  the config type anymore. Moved it into an `expo-splash-screen` plugin
-  entry instead (same image, resize mode, and background color as before).
-- `expo-status-bar`'s `<StatusBar>` dropped the `translucent` prop, so I
-  pulled it out of the two places that used it (`App.tsx` and
-  `Login.tsx`).
-- `StyleSheet.absoluteFillObject` got renamed to `StyleSheet.absoluteFill`,
-  fixed the two spots using it in `EventsMap.tsx`.
-- `@expo/vector-icons` wasn't picked up automatically even though four files
-  import from it, had to install it explicitly.
-- tsc also needed `"types": ["jest"]` added to `tsconfig.json` for the test
-  file to see `describe`/`test`/`expect` again (this project didn't have an
-  explicit `types` array before, and without one the jest globals weren't
-  resolving under the new config).
+My first version of this workflow only ran `expo export`, which makes
+JavaScript bundles, not binaries. The store team can't upload those, so I
+rebuilt it. Getting real builds working took a few tries:
 
-After all that, `expo-doctor` passes clean (21/21) and `npx tsc --noEmit`
-has zero errors. Also ran `npx expo export --platform android` into a temp
-folder by hand to make sure it still bundles the same way the release
-workflow builds it, and it does.
-
-### Release workflow
-
-`release.yml` needed one real change: it was pinned to Node 18, but
-`react-native` 0.86 (what SDK 57 pulls in) requires Node 20.19.4 or newer
-and will refuse to run on anything older. Bumped the workflow's
-`node-version` to 20. Didn't touch anything else in the workflow, the rest
-of it (the export/zip/release-attach steps) doesn't care about the SDK
-version.
-
-One thing I couldn't fix and want to flag: `yarn test` (the "Run tests"
-step in the workflow) is currently broken on SDK 57, and it's not this
-project's code, it's a bug in `jest-expo` itself. When a test file pulls in
-almost any Expo native module (I hit it first through `expo`'s fetch
-polyfill, then again through `expo-constants`), jest-expo tries to
-auto-mock it by grabbing the calling file's path out of a stack trace and
-walking up folders to find its `package.json`. The stack-trace parsing
-library it uses gets confused by this project's own folder name having
-parentheses in it ("Project 4 - Deploy Application (assignment-task6)")
-and silently strips them out of the path, so the walk-up looks in a folder
-that doesn't exist and jest-expo crashes with "TypeError: The path argument
-must be of type string. Received null" before any test even runs. I
-confirmed this by tracing exactly where the path gets mangled. I tried
-mapping the specific native modules to manual stubs to dodge it, but it
-just hits the same bug on the next native module a test happens to touch,
-so it's not something a couple of jest config tweaks can paper over. The
-real fix would be a folder name without parentheses, which isn't something
-I wanted to change unilaterally since it's the assignment folder itself.
-Since GitHub Actions checks out to a path that will still contain the same
-folder name, the "Run tests" step in the workflow will very likely fail the
-same way in CI until this gets sorted out.
+- **iOS: no bundle identifier.** `expo prebuild` stopped because it can't
+  write one into `app.config.ts`. Added `com.eddie7ch.volunteam4deploy`.
+- **iOS: ExpoModulesJSI build script failed.** I first thought it was the
+  spaces and brackets in the project folder name, so both builds now copy the
+  app to `$HOME/volunteam`. That wasn't it. The log (once I stopped cutting it
+  off with `tail`) showed it couldn't resolve its Swift packages. Expo SDK 57
+  needs a newer Xcode than the `macos-15` runner has, and it built on
+  `macos-26`.
+- **Android: over an hour and still compiling.** It was compiling native code
+  for four CPU types. Building arm64 only (what every current Android phone
+  uses) still crawled. Gradle's default 2 GB of memory turned out to be the
+  real problem. With 6 GB it finished in about 12 minutes.
+- **Android: my memory fix broke the build.** I appended the setting to
+  `gradle.properties`, but the file has no newline at the end, so it got
+  glued onto the last setting. Passing it on the command line fixed it.
 
 ## What I learned
 
-The first deployment failed on permissions. The workflow couldn't attach
-the build to the release until I gave it `contents: write`. Reading the
-Actions log line by line is what showed the real error.
+Read the full log before guessing. I spent a run fixing the folder name when
+the real error was a few lines up, hidden by my own `tail`.
 
-Upgrades affect the pipeline too. Moving to Expo SDK 57 meant React Native
-0.86, which won't run on Node 18, so the workflow had to move to Node 20.
-It would have failed on the next release if I hadn't caught it.
+Slow isn't the same as stuck. Cancelling the long Android build showed it was
+still making progress, which pointed at resources rather than a hang.
 
-Run the pipeline's steps locally before publishing. I ran the same install,
-test, type-check, and export commands on my computer before creating
-v1.1.0, so a failure would show up privately instead of as a broken public
-release.
-
-Release notes are for people, not just git. Writing out the new features
-and bug fixes in the release form makes it clear what changed and why.
+Try the pipeline before the real release. The manual trigger let me break and
+fix it privately instead of publishing a pile of failed releases.

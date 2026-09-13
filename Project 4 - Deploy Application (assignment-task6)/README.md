@@ -106,14 +106,14 @@ The workflow then:
 
 1. Runs the unit tests and the type check. If anything fails, nothing gets built.
 2. Builds Android and iOS at the same time:
-   - `volunteam-android.apk`, installable straight onto an Android phone.
+   - `volunteam-android.apk`, installable straight onto an Android phone (arm64, which every current phone uses).
    - `volunteam-android.aab`, the format Google Play wants.
    - `volunteam-ios-simulator.zip`, an unsigned Release build for the iOS
      Simulator. Signing it for the App Store needs the Apple Developer
      account the deployment team owns.
 3. Attaches all three files to the release, under **Assets**.
 
-It takes about 20 minutes. Follow it in the **Actions** tab. To try a build
+It takes about 15 minutes. Follow it in the **Actions** tab. To try a build
 without publishing a release, use **Run workflow** on the same page. The files
 then show up under the run's **Artifacts** instead.
 

@@ -69,7 +69,7 @@ export default function EventsMap(props: StackScreenProps<any>) {
     };
 
     const handleNavigateToCreateEvent = () => {
-        navigation.navigate('CreateEvent');
+        navigation.navigate('SelectEventLocation');
     };
 
     const handleNavigateToEventDetails = (event: Event) => {
@@ -115,7 +115,7 @@ export default function EventsMap(props: StackScreenProps<any>) {
             </MapView>
 
             <View style={styles.footer}>
-                <Text style={styles.footerText}>{events.length} event(s) found</Text>
+                <Text style={styles.footerText}>{events.length} {events.length === 1 ? 'event' : 'events'} found</Text>
                 <RectButton
                     style={[styles.smallButton, { backgroundColor: '#00A3FF' }]}
                     onPress={handleNavigateToCreateEvent}

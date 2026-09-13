@@ -67,7 +67,12 @@ assessment's instructions to reproduce first).
 
 ## Manual test: re-run after the fix
 
-Repeated steps 1-5 above against the fixed code: both `luigi@carluccio.it`
-and `john@silva.com.br` are now accepted by the Email field, and the login
-request reaches the server (which then correctly validates the password
-against `db.json`, unrelated to this bug).
+Ran it on my actual phone (Pixel, Expo dev client, json-server running
+against `db.json`), password `123456` for every account:
+
+- `luigi@carluccio.it`: accepted, logged in, landed on the events map.
+- `john@silva.com.br`: accepted, logged in, landed on the events map.
+- `ulla.ulriksen@example.com`: still accepted and logs in, so the fix
+  didn't break normal `.com` addresses.
+
+Logged out between each one with the button in the top right of the map.

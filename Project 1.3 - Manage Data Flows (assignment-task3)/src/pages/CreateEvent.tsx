@@ -1,10 +1,10 @@
 import { Feather } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { StackScreenProps } from '@react-navigation/stack';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import React, { useContext, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
 import Spinner from 'react-native-loading-spinner-overlay';
 import BigButton from '../components/BigButton';
@@ -24,6 +24,7 @@ export default function CreateEvent({ navigation }: StackScreenProps<any>) {
     const [dateTime, setDateTime] = useState(new Date());
     const [showDateTimePicker, setShowDateTimePicker] = useState(false);
     const [imageUri, setImageUri] = useState<string>();
+    const [imageBase64, setImageBase64] = useState<string>();
     const [position, setPosition] = useState<{ latitude: number; longitude: number }>();
     const [isSaving, setIsSaving] = useState(false);
 
@@ -45,14 +46,45 @@ export default function CreateEvent({ navigation }: StackScreenProps<any>) {
             Alert.alert('Permission needed', 'Photo library permission is required to add an event image.');
             return;
         }
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            quality: 1,
-            base64: true,
-        });
-        if (!result.canceled && result.assets[0]) {
-            setImageUri(result.assets[0].uri);
+        // Drop the previous photo first so two full-size images aren't held in memory at once
+        setImageUri(undefined);
+        setImageBase64(undefined);
+        try {
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ['images'],
+                quality: 0.4,
+                base64: true,
+            });
+            if (!result.canceled && result.assets[0]) {
+                setImageUri(result.assets[0].uri);
+                setImageBase64(result.assets[0].base64 ?? undefined);
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert('Could not open photo', 'That image could not be loaded. Try a smaller photo or restart the app.');
         }
+    };
+
+    // Android has no combined date+time picker, so pick the date first and then the time
+    const handleOpenDateTimePicker = () => {
+        if (Platform.OS !== 'android') {
+            setShowDateTimePicker(true);
+            return;
+        }
+        DateTimePickerAndroid.open({
+            value: dateTime,
+            mode: 'date',
+            onChange: (dateEvent, pickedDate) => {
+                if (dateEvent.type !== 'set' || !pickedDate) return;
+                DateTimePickerAndroid.open({
+                    value: pickedDate,
+                    mode: 'time',
+                    onChange: (timeEvent, pickedTime) => {
+                        setDateTime(timeEvent.type === 'set' && pickedTime ? pickedTime : pickedDate);
+                    },
+                });
+            },
+        });
     };
 
     const formIsValid = (): boolean => {
@@ -76,20 +108,15 @@ export default function CreateEvent({ navigation }: StackScreenProps<any>) {
             const accessToken = await getFromCache<string>('accessToken');
 
             let uploadedImageUrl: string | undefined;
-            if (imageUri) {
-                const base64 = await fetch(imageUri)
-                    .then((r) => r.blob())
-                    .then(
-                        (blob) =>
-                            new Promise<string>((resolve, reject) => {
-                                const reader = new FileReader();
-                                reader.onloadend = () => resolve(reader.result as string);
-                                reader.onerror = reject;
-                                reader.readAsDataURL(blob);
-                            })
-                    );
-                const uploadResponse = await uploadImage(base64.split(',')[1] ?? base64);
-                uploadedImageUrl = uploadResponse.data?.data?.url;
+            let imageUploadFailed = false;
+            if (imageBase64) {
+                try {
+                    uploadedImageUrl = await uploadImage(imageBase64);
+                } catch (uploadError) {
+                    // A broken photo upload (e.g. no ImgBB key) shouldn't stop the event itself from saving
+                    console.log(uploadError);
+                    imageUploadFailed = true;
+                }
             }
 
             await api.createEvent(
@@ -105,6 +132,10 @@ export default function CreateEvent({ navigation }: StackScreenProps<any>) {
                 accessToken
             );
 
+            setImageBase64(undefined);
+            if (imageUploadFailed) {
+                Alert.alert('Event created', "The event was saved, but the photo couldn't be uploaded.");
+            }
             navigation.navigate('EventsMap');
         } catch (error) {
             console.log(error);
@@ -144,7 +175,7 @@ export default function CreateEvent({ navigation }: StackScreenProps<any>) {
 
                 <Spacer size={16} />
                 <Text style={styles.label}>Date & time</Text>
-                <RectButton style={styles.pickerButton} onPress={() => setShowDateTimePicker(true)}>
+                <RectButton style={styles.pickerButton} onPress={handleOpenDateTimePicker}>
                     <Text style={styles.pickerButtonText}>
                         {dateTime.toLocaleDateString()} · {formatAMPM(dateTime)}
                     </Text>

@@ -106,7 +106,7 @@ jobs:
   ios:
     name: Build iOS (simulator app)
     needs: test
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -138,12 +138,13 @@ jobs:
       - name: Build release app
         working-directory: ${{ env.BUILD_DIR }}
         run: |
+          xcodebuild -version
           workspace=$(ls -d ios/*.xcworkspace)
           scheme=$(basename "$workspace" .xcworkspace)
           xcodebuild -workspace "$workspace" -scheme "$scheme" -configuration Release \
             -sdk iphonesimulator -derivedDataPath ios/build \
             CODE_SIGNING_ALLOWED=NO > xcodebuild.log 2>&1 || {
-            grep -nE "error:|Error|failed" xcodebuild.log | tail -n 60
+            grep -n -B2 -A12 "xcodebuild: error\|error:" xcodebuild.log | head -n 120
             tail -n 80 xcodebuild.log
             exit 1
           }

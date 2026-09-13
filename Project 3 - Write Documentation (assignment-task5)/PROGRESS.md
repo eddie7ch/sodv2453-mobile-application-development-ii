@@ -49,3 +49,20 @@ what expo-doctor and tsc flagged:
 expo-doctor passes 21/21, tsc --noEmit is clean, and `expo export` bundles
 fine for Android. Didn't touch any of the doc comments beyond what these
 fixes needed.
+
+## What I learned
+
+Documentation goes out of date the moment the code changes. After the SDK
+upgrade, my README still told people to use plain Expo Go and didn't
+mention the Node version, the development build for the map, or the Google
+Maps key. I only noticed because I went back and checked it against how the
+project actually runs now.
+
+Following your own instructions is the best test. When I ran `yarn test`
+exactly as the README said, it failed, because the upgrade had broken the
+Jest setup and nobody had run it since. I fixed it, and now I actually run
+the commands before trusting the docs.
+
+Write for someone who has never seen the project. Things that felt obvious
+to me, like the password for the test users, or that past events are
+hidden, are exactly what a new person would get stuck on.

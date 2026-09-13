@@ -23,11 +23,15 @@ builds on the previous one's work. In this project's own folder specifically:
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/) (LTS) and Yarn
-- The [Expo Go](https://expo.dev/client) app on your phone (Android or iOS),
-  or an Android/iOS emulator, to actually run the app
+- [Node.js](https://nodejs.org/) 20 or newer, and Yarn. The app is on Expo
+  SDK 57 (React Native 0.86), which won't run on Node 18.
+- An Android or iOS phone on the same Wi-Fi as your computer, or an
+  emulator.
+- To see the map on a real device you need an Expo **development build**
+  (see "Running on a phone" below). Plain Expo Go runs everything else, but
+  it can't render the map tiles for this version of `react-native-maps`.
 - A free [ImgBB](https://imgbb.com/signup) account if you want event photo
-  uploads to work
+  uploads.
 
 ## Setting up the development environment
 
@@ -35,52 +39,89 @@ builds on the previous one's work. In this project's own folder specifically:
    ```
    yarn install
    ```
-2. Set up the fake API (`json-server`, used instead of a real backend),
-   see below.
-3. (Optional) Set up image uploads (ImgBB), see below.
+   This also runs `patch-package`, which applies a small fix to `jest-expo`
+   (see "Running the tests").
+2. Set up the fake API, see below.
+3. (Optional) Set up image uploads, see below.
 
 ### Fake API (`json-server`)
 
-The app talks to `db.json` at the repo root through `json-server` (with
-`json-server-auth` for login/token support) instead of a real backend.
+The app talks to `db.json` through `json-server` instead of a real backend.
+The `-m ./node_modules/json-server-auth` part matters: that's what adds the
+`/login` endpoint. Without it, logging in fails with a 404.
 
-Get your computer's local IP address, then start the server:
+Find your computer's local IP address (`ipconfig` on Windows, look for the
+IPv4 address), then start the server:
 
 ```
 npx json-server --watch db.json --port 3333 --host <your_ip_address> -m ./node_modules/json-server-auth
 ```
 
-Update `baseURL` in `src/services/api.ts` to `http://<your_ip_address>:3333`
-to match. Using your machine's actual IP, not `localhost`, is what lets a
-phone running Expo Go reach the server over the same Wi-Fi network.
+Set `baseURL` in `src/services/api.ts` to `http://<your_ip_address>:3333`.
+It has to be your machine's real IP, not `localhost`, so a phone on the same
+Wi-Fi can reach it.
+
+Every seeded user's password is `123456` (for example
+`ulla.ulriksen@example.com`).
+
+The map only shows events whose date hasn't passed yet. If the seeded dates
+in `db.json` are in the past, the map will say "0 event(s) found", so move
+them into the future.
 
 Alternative, no local server needed: point `baseURL` at
 `https://my-json-server.typicode.com/<your-github-username>/<your-github-repo>`
-(requires `db.json` at the repo root, which it already is).
+(requires `db.json` at the repo root). That one is read-only and doesn't
+support login.
 
 ### Image upload API (ImgBB)
 
-Update `src/services/imageApi.ts` if you want to use a different provider.
-By default this project uses [ImgBB](https://api.imgbb.com/).
+Photo uploads go through `src/services/imageApi.ts`, which uses
+[ImgBB](https://api.imgbb.com/) by default.
 
-1. Sign up free at https://imgbb.com/signup and grab an API key.
-2. Add it to a `.env` file at the repo root as `IMGBB_API_KEY=...`, **or**
-   pass it inline when starting the app (see below).
-3. Before creating a build or publishing, push the secret to EAS:
-   `eas secret:push`.
+1. Sign up at https://imgbb.com/signup and create an API key.
+2. Put it in a `.env` file in this folder as `IMGBB_API_KEY=...`. The file
+   is gitignored, so the key never gets committed.
+
+Heads up: ImgBB sometimes blocks brand new accounts ("You have been
+forbidden to use this website", error 103), even on their own website. If
+that happens, swap the provider in `imageApi.ts`. Project 1.3 in this
+monorepo shows a working Cloudinary version.
+
+### Google Maps key (development build only)
+
+A development build needs its own Google Maps key or the map crashes with
+"API key not found".
+
+1. In Google Cloud, enable **Maps SDK for Android** and create an API key
+   restricted to that API.
+2. Add it to EAS as an environment variable named
+   `GOOGLE_MAPS_API_KEY_ANDROID` (`app.config.ts` reads it when building).
 
 ## Running the app
 
 ```
-IMGBB_API_KEY="<your_key>" yarn start
+yarn start
 ```
 
-Omit the `IMGBB_API_KEY=...` prefix if you're not testing image uploads,
-everything else works without it. This opens the Expo dev tools; scan the
-QR code with Expo Go on your phone, or press `a`/`i` for an Android/iOS
-emulator.
+This starts Metro and shows a QR code. Scan it with Expo Go to run the app
+(everything except the map tiles works there).
 
-`yarn android` / `yarn ios` / `yarn web` start directly for that platform.
+### Running on a phone with the map (development build)
+
+1. Build the development client once with EAS:
+   ```
+   npx eas-cli build --profile development --platform android
+   ```
+   Install the APK it gives you on your phone.
+2. Start Metro in dev-client mode:
+   ```
+   npx expo start --dev-client
+   ```
+3. Open the installed app and pick your computer from the list of
+   development servers.
+
+You only rebuild when a native dependency changes. JavaScript changes just
+need a reload in the app.
 
 ## Running the tests
 
@@ -88,5 +129,10 @@ emulator.
 yarn test
 ```
 
-Runs the Jest unit tests (`jest-expo` preset), currently covers
-`validateEmail` in `src/utils/index.ts`.
+Runs the Jest unit tests (`jest-expo` preset), which cover `validateEmail`
+in `src/utils/index.ts`.
+
+The project folder name has parentheses in it, which breaks how `jest-expo`
+finds native module mocks. `patches/jest-expo+57.0.5.patch` fixes that and
+`jest.setup.js` stops Expo's `fetch` polyfill from crashing the run. Both
+are applied automatically, so you shouldn't have to think about them.

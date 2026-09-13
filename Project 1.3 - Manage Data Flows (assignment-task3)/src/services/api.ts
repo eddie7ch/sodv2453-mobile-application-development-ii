@@ -11,7 +11,7 @@ const api = axios.create({
     //
     // To use `my-json-server`, make sure your `db.json` is located at the repo root.
 
-    baseURL: 'http://0.0.0.0:3333',
+    baseURL: 'http://192.168.1.156:3333',
 });
 
 export const authenticateUser = (email: string, password: string): Promise<AxiosResponse> => {
@@ -26,6 +26,16 @@ export const getEvents = (accessToken: string): Promise<AxiosResponse> => {
 
 export const getEventDetails = (eventId: string, accessToken: string): Promise<AxiosResponse> => {
     return api.get(`/events/${eventId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+};
+
+export const applyToVolunteer = (
+    eventId: string,
+    volunteersIds: string[],
+    accessToken: string
+): Promise<AxiosResponse> => {
+    return api.patch(`/events/${eventId}`, { volunteersIds }, {
         headers: { Authorization: `Bearer ${accessToken}` },
     });
 };

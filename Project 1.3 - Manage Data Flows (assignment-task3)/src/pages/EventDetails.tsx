@@ -1,10 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { StackScreenProps } from '@react-navigation/stack';
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
 import BigButton from '../components/BigButton';
 import Spacer from '../components/Spacer';
+import { AuthenticationContext } from '../context/AuthenticationContext';
 import * as api from '../services/api';
 import { getFromCache } from '../services/caching';
 import { Event } from '../types/Event';
@@ -12,7 +13,10 @@ import { formatAMPM } from '../utils';
 
 export default function EventDetails({ route, navigation }: StackScreenProps<any>) {
     const routeEvent = (route.params as { event: Event }).event;
+    const authenticationContext = useContext(AuthenticationContext);
+    const userId = authenticationContext?.value?.id as string | undefined;
     const [event, setEvent] = useState<Event>(routeEvent);
+    const [isApplying, setIsApplying] = useState(false);
 
     useEffect(() => {
         getFromCache<string>('accessToken')
@@ -23,11 +27,23 @@ export default function EventDetails({ route, navigation }: StackScreenProps<any
 
     const volunteersNeeded = event.volunteersNeeded - event.volunteersIds.length;
     const isEventFull = volunteersNeeded <= 0;
+    const hasApplied = !!userId && event.volunteersIds.includes(userId);
 
-    // Submitting a volunteer application is implemented in Project 1.3 (Manage Data Flows) —
-    // this project only covers displaying the event details UI and navigating to/from it.
-    const handleApplyToVolunteer = () => {
-        Alert.alert('Coming soon', 'Applying to volunteer will be implemented in Project 1.3.');
+    const handleApplyToVolunteer = async () => {
+        if (!userId || hasApplied || isEventFull) return;
+
+        setIsApplying(true);
+        try {
+            const accessToken = await getFromCache<string>('accessToken');
+            const response = await api.applyToVolunteer(event.id, [...event.volunteersIds, userId], accessToken);
+            setEvent(response.data);
+            Alert.alert("You're in", 'Thanks for volunteering for this event.');
+        } catch (error) {
+            console.log(error);
+            Alert.alert('Something went wrong', 'Could not sign you up. Please try again.');
+        } finally {
+            setIsApplying(false);
+        }
     };
 
     return (
@@ -52,16 +68,18 @@ export default function EventDetails({ route, navigation }: StackScreenProps<any
 
                     <Spacer size={24} />
                     <Text style={styles.volunteersLabel}>
-                        {isEventFull
+                        {hasApplied
+                            ? "You're volunteering for this event"
+                            : isEventFull
                             ? 'This event no longer needs volunteers'
                             : `${volunteersNeeded} volunteer(s) needed`}
                     </Text>
 
                     <Spacer size={40} />
                     <BigButton
-                        label="I want to volunteer"
+                        label={hasApplied ? 'Already volunteering' : 'I want to volunteer'}
                         color="#00A3FF"
-                        disabled={isEventFull}
+                        disabled={isEventFull || hasApplied || isApplying}
                         onPress={handleApplyToVolunteer}
                     />
                 </View>

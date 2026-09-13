@@ -52,6 +52,7 @@ jobs:
     name: Build Android (APK and AAB)
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -88,7 +89,9 @@ jobs:
 
       - name: Build release APK and AAB
         working-directory: ${{ env.BUILD_DIR }}/android
-        run: ./gradlew assembleRelease bundleRelease --no-daemon
+        # Only arm64 is compiled. Every current Android phone uses it, and building all
+        # four CPU types took well over an hour on GitHub's free runners.
+        run: ./gradlew assembleRelease bundleRelease --no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a
 
       - name: Collect binaries
         working-directory: ${{ env.BUILD_DIR }}
@@ -107,6 +110,7 @@ jobs:
     name: Build iOS (simulator app)
     needs: test
     runs-on: macos-26
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 

@@ -91,7 +91,11 @@ jobs:
         working-directory: ${{ env.BUILD_DIR }}/android
         # Only arm64 is compiled. Every current Android phone uses it, and building all
         # four CPU types took well over an hour on GitHub's free runners.
-        run: ./gradlew assembleRelease bundleRelease --no-daemon --console=plain -PreactNativeArchitectures=arm64-v8a
+        # Lint is skipped here because the tests job already checks the code, and Gradle
+        # gets more memory since the default 2 GB made it crawl on the runner.
+        run: |
+          echo "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" >> gradle.properties
+          ./gradlew assembleRelease bundleRelease --no-daemon --parallel --console=plain             -PreactNativeArchitectures=arm64-v8a -x lint -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease
 
       - name: Collect binaries
         working-directory: ${{ env.BUILD_DIR }}

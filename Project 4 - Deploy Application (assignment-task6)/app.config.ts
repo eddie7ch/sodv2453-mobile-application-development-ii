@@ -13,6 +13,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     assetBundlePatterns: ['**/*'],
     ios: {
         supportsTablet: true,
+        bundleIdentifier: 'com.eddie7ch.volunteam4deploy',
     },
     android: {
         package: 'com.eddie7ch.volunteam4deploy',

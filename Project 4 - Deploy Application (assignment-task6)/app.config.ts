@@ -49,7 +49,4 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
             },
         ],
     ],
-    extra: {
-        IMGBB_API_KEY: process.env.IMGBB_API_KEY,
-    },
 });

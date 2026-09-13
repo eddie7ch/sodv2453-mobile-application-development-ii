@@ -23,10 +23,10 @@ builds on the previous one's work. In this project's own folder specifically:
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/) (LTS) and Yarn
-- The [Expo Go](https://expo.dev/client) app on your phone (Android or iOS),
-  or an Android/iOS emulator, to actually run the app
-- A free [ImgBB](https://imgbb.com/signup) account if you want event photo
+- [Node.js](https://nodejs.org/) 20 or newer, and Yarn
+- An Android phone on the same Wi-Fi as your computer, with the Volunteam
+  development build installed (Expo Go can't show the map for this setup)
+- A free [Cloudinary](https://cloudinary.com/) account if you want event photo
   uploads to work
 
 ## Setting up the development environment
@@ -35,14 +35,13 @@ builds on the previous one's work. In this project's own folder specifically:
    ```
    yarn install
    ```
-2. Set up the fake API (`json-server`, used instead of a real backend),
-   see below.
-3. (Optional) Set up image uploads (ImgBB), see below.
+2. Set up the fake API, see below.
+3. (Optional) Set up event photos, see "Event photos (Cloudinary)".
 
 ### Fake API (`json-server`)
 
-The app talks to `db.json` at the repo root through `json-server` (with
-`json-server-auth` for login/token support) instead of a real backend.
+The app talks to `db.json` through `json-server` (with `json-server-auth` for
+login) instead of a real backend.
 
 Get your computer's local IP address, then start the server:
 
@@ -50,37 +49,19 @@ Get your computer's local IP address, then start the server:
 npx json-server --watch db.json --port 3333 --host <your_ip_address> -m ./node_modules/json-server-auth
 ```
 
-Update `baseURL` in `src/services/api.ts` to `http://<your_ip_address>:3333`
-to match, using your machine's actual IP (not `localhost`) is what lets a
-phone running Expo Go reach the server over the same Wi-Fi network.
+Set `baseURL` in `src/services/api.ts` to `http://<your_ip_address>:3333`. It
+has to be your computer's real IP, not `localhost`, so the phone can reach it.
 
-Alternative, no local server needed: point `baseURL` at
-`https://my-json-server.typicode.com/<your-github-username>/<your-github-repo>`
-(requires `db.json` at the repo root, which it already is).
-
-### Image upload API (ImgBB)
-
-Update `src/services/imageApi.ts` if you want to use a different provider,
-by default this project uses [ImgBB](https://api.imgbb.com/).
-
-1. Sign up free at https://imgbb.com/signup and grab an API key.
-2. Add it to a `.env` file at the repo root as `IMGBB_API_KEY=...`, **or**
-   pass it inline when starting the app (see below).
-3. Before creating a build or publishing, push the secret to EAS:
-   `eas secret:push`.
+Every seeded user's password is `123456`, for example `ulla.ulriksen@example.com`.
 
 ## Running the app
 
 ```
-IMGBB_API_KEY="<your_key>" yarn start
+npx expo start --dev-client
 ```
 
-(Omit the `IMGBB_API_KEY=...` prefix if you're not testing image uploads,
-everything else works without it.) This opens the Expo dev tools; scan the
-QR code with Expo Go on your phone, or press `a`/`i` for an Android/iOS
-emulator.
-
-`yarn android` / `yarn ios` / `yarn web` start directly for that platform.
+Open the Volunteam development build on your phone and pick your computer from
+the list of development servers.
 
 ## Running the tests
 
@@ -88,8 +69,7 @@ emulator.
 yarn test
 ```
 
-Runs the Jest unit tests (`jest-expo` preset), currently covers
-`validateEmail` in `src/utils/index.ts`.
+Runs the Jest unit tests for `validateEmail` in `src/utils/index.ts`.
 
 ## Event photos (Cloudinary)
 

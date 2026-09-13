@@ -14,12 +14,20 @@ import { getEnvironentVariable } from '../utils';
 // When creating your app build or publishing, do not forget to run 'eas secret:push' command
 // to import your secret values to EAS.
 
+/** HTTP client for the ImgBB image hosting API. Sends the API key with every request. */
 const imageApi = axios.create({
     baseURL: 'https://api.imgbb.com/1',
     headers: { 'Content-Type': 'multipart/form-data' },
     params: { key: getEnvironentVariable('IMGBB_API_KEY') },
 });
 
+/**
+ * Uploads a picture to ImgBB so it can be shown in the app from a web address.
+ *
+ * @param imageBase64 - The image file encoded as a base64 string.
+ * @returns A promise with the ImgBB response. The hosted picture's address is in
+ * `response.data.data.url`. Rejects if the upload fails, for example with a missing API key.
+ */
 export const uploadImage = (imageBase64: string): Promise<AxiosResponse> => {
     const data = new FormData();
     data.append('image', imageBase64);

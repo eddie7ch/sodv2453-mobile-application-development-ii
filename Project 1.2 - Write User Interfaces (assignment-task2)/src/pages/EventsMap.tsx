@@ -5,7 +5,7 @@ import { StackScreenProps } from '@react-navigation/stack';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { RectButton } from 'react-native-gesture-handler';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 import customMapStyle from '../../map-style.json';
 import * as MapSettings from '../constants/MapSettings';
 import { AuthenticationContext } from '../context/AuthenticationContext';
@@ -83,7 +83,6 @@ export default function EventsMap(props: StackScreenProps<any>) {
         <View style={styles.container}>
             <MapView
                 ref={mapViewRef}
-                provider={PROVIDER_GOOGLE}
                 initialRegion={MapSettings.DEFAULT_REGION}
                 style={styles.mapStyle}
                 customMapStyle={customMapStyle}
@@ -131,14 +130,14 @@ export default function EventsMap(props: StackScreenProps<any>) {
 
 const styles = StyleSheet.create({
     container: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         flex: 1,
         justifyContent: 'flex-end',
         alignItems: 'center',
     },
 
     mapStyle: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
     },
 
     logoutButton: {

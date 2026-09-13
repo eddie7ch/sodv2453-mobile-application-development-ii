@@ -1,7 +1,6 @@
 # Notes on Project 2
 
-Pulled 1.2 and 1.3's work in first, then set up Jest from scratch since
-nothing was configured. Had to pin jest-expo to ^47 and jest to ^29 to
+Set up Jest from scratch since nothing was configured. Had to pin jest-expo to ^47 and jest to ^29 to
 match this project's actual Expo SDK version, the latest jest-expo on npm
 targets SDK 57 and would've silently used the wrong preset.
 

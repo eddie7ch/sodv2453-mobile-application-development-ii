@@ -11,14 +11,13 @@
 
 ## Overall implementation status (2026-09-08)
 
-Done autonomously while Eddie was away — see each project's own
-`PROGRESS.md` for full detail. **None of this has been reviewed by Eddie
-or actually run on a device yet — treat all of it as a draft to check,
-not a final submission.**
+See each project's own `PROGRESS.md` for full detail. **None of this has
+been reviewed by Eddie or actually run on a device yet — treat all of it
+as a draft to check, not a final submission.**
 
 | Project | Status | Notes |
 |---|---|---|
-| 1.1 | Done | Merged. [MobileAppDevelopmentAssessments#1](https://github.com/eddie7ch/MobileAppDevelopmentAssessments/pull/1), with line comments in Files changed for step 5 and lessons learned for all 3 rubric rows. Needs submitting on D2L (due Sep 17). |
+| 1.1 | In progress (2026-09-17) | Prior fork/PR scrapped and deleted; redoing from a fresh clone of `dimarachi/MobileAppDevelopmentAssessments`. |
 | 1.2 | Done, phone-tested | Event Details rebuilt to the Figma frames. One clean PR: [#7](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/7), merged. Checked line by line against the brief and task diagram. Submit #7. |
 | 1.3 | Done, phone-tested | Two-step create event flow rebuilt to the brief and Figma, camera/library + upload with thumbnail, required fields, offline cache fallback tested. One clean PR: [#8](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/8), merged. Submit #8. |
 | 2 | Done, phone-tested | Email TLD bug. [#1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/1) merged. |

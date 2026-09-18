@@ -17,7 +17,7 @@ as a draft to check, not a final submission.**
 
 | Project | Status | Notes |
 |---|---|---|
-| 1.1 | In progress (2026-09-17) | Prior fork/PR scrapped and deleted; redoing from a fresh clone of `dimarachi/MobileAppDevelopmentAssessments`. |
+| 1.1 | Done (2026-09-17) | Merged Jose's `login-screen-update` into Sarah's `login-screen-initial`, fixed the missing placeholder text so the screen matches the design, PR [#1](https://github.com/eddie7ch/MobileAppDevelopmentAssessments/pull/1) merged. Needs submitting on D2L (due Sep 17). |
 | 1.2 | Done, phone-tested | Event Details rebuilt to the Figma frames. One clean PR: [#7](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/7), merged. Checked line by line against the brief and task diagram. Submit #7. |
 | 1.3 | Done, phone-tested | Two-step create event flow rebuilt to the brief and Figma, camera/library + upload with thumbnail, required fields, offline cache fallback tested. One clean PR: [#8](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/8), merged. Submit #8. |
 | 2 | Done, phone-tested | Email TLD bug. [#1](https://github.com/eddie7ch/sodv2453-mobile-application-development-ii/pull/1) merged. |

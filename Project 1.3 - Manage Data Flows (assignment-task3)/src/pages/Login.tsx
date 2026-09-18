@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     },
 
     invalid: {
-        borderColor: 'red',
+        borderColor: '#FF003A',
     },
 
     error: {

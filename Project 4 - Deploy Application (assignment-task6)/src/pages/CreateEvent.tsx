@@ -149,11 +149,10 @@ export default function CreateEvent({ navigation, route }: StackScreenProps<any>
         }
     };
 
-    const dateLabel = dateTime
-        ? `${dateTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${formatAMPM(
-              dateTime
-          ).toUpperCase()}`
+    const dateOnlyLabel = dateTime
+        ? dateTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         : '';
+    const timeOnlyLabel = dateTime ? formatAMPM(dateTime).toUpperCase() : '';
 
     return (
         <View style={styles.container}>
@@ -189,9 +188,20 @@ export default function CreateEvent({ navigation, route }: StackScreenProps<any>
                 />
 
                 <Text style={styles.label}>Date and Time</Text>
-                <RectButton style={[styles.input, styles.dateInput]} onPress={handleOpenDateTimePicker}>
-                    <Text style={styles.inputText}>{dateLabel}</Text>
-                </RectButton>
+                <View style={styles.dateTimeRow}>
+                    <RectButton
+                        style={[styles.input, styles.dateInput, styles.dateTimeBox]}
+                        onPress={handleOpenDateTimePicker}
+                    >
+                        <Text style={styles.inputText}>{dateOnlyLabel}</Text>
+                    </RectButton>
+                    <RectButton
+                        style={[styles.input, styles.dateInput, styles.dateTimeBox]}
+                        onPress={handleOpenDateTimePicker}
+                    >
+                        <Text style={styles.inputText}>{timeOnlyLabel}</Text>
+                    </RectButton>
+                </View>
                 {!!dateTime && !dateIsInFuture && <Text style={styles.error}>Pick a date and time in the future.</Text>}
                 {showIosPicker && (
                     <DateTimePicker
@@ -257,7 +267,7 @@ const styles = StyleSheet.create({
     hint: {
         fontFamily: 'Nunito_600SemiBold',
         color: '#8FA7B2',
-        fontSize: 11,
+        fontSize: 12,
     },
 
     input: {
@@ -273,12 +283,21 @@ const styles = StyleSheet.create({
     },
 
     multiline: {
-        height: 120,
+        height: 111,
         paddingTop: 16,
     },
 
     dateInput: {
         justifyContent: 'center',
+    },
+
+    dateTimeRow: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+
+    dateTimeBox: {
+        flex: 1,
     },
 
     inputText: {
